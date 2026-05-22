@@ -1,0 +1,14 @@
+{
+	"name": "BudpyClockPlugin",
+	"version": "0.1.0",
+	"description": "Budpy clock plugin firmware library",
+	"frameworks": "arduino",
+	"platforms": "espressif32",
+	"dependencies": {
+		"bodmer/TFT_eSPI": "^2.5.43"
+	},
+	"build": {
+		"srcDir": "firmware",
+		"includeDir": "firmware"
+	}
+}

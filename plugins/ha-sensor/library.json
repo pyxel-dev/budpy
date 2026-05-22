@@ -1,0 +1,15 @@
+{
+	"name": "BudpyHaSensorPlugin",
+	"version": "0.1.0",
+	"description": "Budpy Home Assistant sensor plugin firmware library",
+	"frameworks": "arduino",
+	"platforms": "espressif32",
+	"dependencies": {
+		"bblanchon/ArduinoJson": "^7.4.3",
+		"bodmer/TFT_eSPI": "^2.5.43"
+	},
+	"build": {
+		"srcDir": "firmware",
+		"includeDir": "firmware"
+	}
+}

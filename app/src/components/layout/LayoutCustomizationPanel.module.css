@@ -1,0 +1,341 @@
+.customization-panel {
+  display: grid;
+  min-width: 0;
+  width: 100%;
+}
+
+.plugin-settings-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.plugin-settings-title-row h3 {
+  margin-bottom: 0;
+}
+
+.customization-empty {
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.plugin-picker-full {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 1rem;
+}
+
+.plugin-picker-full-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--foreground);
+  margin: 0;
+}
+
+.plugin-picker-full-body {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.customization-placeholder {
+  display: grid;
+  gap: 1rem;
+  min-height: 220px;
+  align-content: center;
+  justify-items: center;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 1rem;
+}
+
+.customization-placeholder-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 26px);
+  grid-template-rows: repeat(4, 26px);
+  gap: 4px;
+}
+
+.customization-placeholder-grid span {
+  display: block;
+  border: 1px dashed var(--preview-cell-border);
+  border-radius: 4px;
+  background: var(--preview-cell-background);
+}
+
+.plugin-settings-panel {
+  width: 100%;
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.plugin-settings-heading {
+  display: grid;
+  gap: 2px;
+}
+
+.plugin-settings-heading h3 {
+  font-size: 0.875rem;
+  margin-bottom: 0;
+}
+
+.plugin-settings-heading p {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.plugin-settings-grid {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.plugin-settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  padding: 2px;
+}
+
+.plugin-settings-tabs button {
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+  padding: 6px 8px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.plugin-settings-tabs button[data-active="true"] {
+  color: var(--foreground);
+  background: var(--surface);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.08);
+}
+
+.plugin-settings-section {
+  min-width: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 0.25rem;
+}
+
+.plugin-settings-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.5rem 0;
+  color: var(--muted);
+  cursor: pointer;
+  list-style: none;
+}
+
+.plugin-settings-summary::-webkit-details-marker {
+  display: none;
+}
+
+.plugin-settings-summary-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.plugin-settings-summary-title {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.plugin-settings-chevron {
+  flex-shrink: 0;
+  transition: transform 150ms ease;
+}
+
+.plugin-settings-section[open] .plugin-settings-chevron {
+  transform: rotate(180deg);
+}
+
+.plugin-settings-section-fields {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding-bottom: 0.75rem;
+}
+
+.plugin-picker-panel {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.context-plugin-list {
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.context-plugin-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 4px;
+}
+
+.context-plugin-list-item {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.75rem;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: border-color 120ms ease;
+}
+
+.context-plugin-list-item:hover:not(:disabled) {
+  border-color: var(--preview-widget-selected-border);
+}
+
+.context-plugin-list-item:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.context-plugin-list-item strong {
+  display: block;
+  color: var(--foreground);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.context-plugin-list-item span {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.context-plugin-paste-button {
+  width: 38px;
+  min-height: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--link);
+  background: var(--surface);
+  padding: 0;
+}
+
+.context-plugin-paste-button:hover:not(:disabled) {
+  border-color: var(--preview-widget-selected-border);
+  background: var(--surface-muted);
+}
+
+.context-plugin-paste-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.field {
+  min-width: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.field-disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  user-select: none;
+}
+
+.field input,
+.field select {
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.field input[type="color"] {
+  height: 32px;
+  padding: 3px;
+  cursor: pointer;
+}
+
+.toggle-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.field-control {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.field-control input,
+.field-control select {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+}
+
+.var-toggle-btn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  background: var(--surface-muted);
+  padding: 0;
+}
+
+.var-toggle-btn:hover {
+  color: var(--link);
+  border-color: var(--link);
+}
+
+.var-toggle-btn--active {
+  color: var(--link);
+  border-color: var(--link);
+}
+
+.toggle-field input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--green);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .customization-panel {
+    max-height: none;
+    overflow-y: visible;
+    padding-top: 0;
+  }
+}

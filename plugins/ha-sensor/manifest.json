@@ -1,0 +1,198 @@
+{
+	"id": "ha-sensor",
+	"version": "0.2.0",
+	"displayName": "Home Assistant Sensor",
+	"description": "Displays the state of a Home Assistant sensor entity.",
+	"defaultSize": {
+		"colSpan": 2,
+		"rowSpan": 1
+	},
+	"capabilities": ["ha", "network"],
+	"firmware": {
+		"type": "platformio-library",
+		"path": ".",
+		"include": "HaSensorPlugin.h",
+		"renderFunction": "renderHaSensorPlugin"
+	},
+	"configFields": [
+		{
+			"key": "haUrl",
+			"label": "Home Assistant URL",
+			"type": "text",
+			"required": true,
+			"placeholder": "http://192.168.0.2:8123",
+			"description": "The base URL of your Home Assistant instance (use IP address, not homeassistant.local)."
+		},
+		{
+			"key": "haToken",
+			"label": "Long-lived access token",
+			"type": "text",
+			"required": true,
+			"maxLength": 512,
+			"placeholder": "eyJ...",
+			"description": "A long-lived access token generated in your Home Assistant profile."
+		},
+		{
+			"key": "entityId",
+			"label": "Entity ID",
+			"type": "text",
+			"required": true,
+			"placeholder": "sensor.temperature",
+			"description": "The entity ID of the sensor to display (e.g. sensor.living_room_temperature)."
+		},
+		{
+			"key": "title",
+			"label": "Title",
+			"type": "text",
+			"defaultValue": "",
+			"placeholder": "Temperature",
+			"description": "Optional label shown above the sensor value."
+		},
+		{
+			"key": "unit",
+			"label": "Unit",
+			"type": "text",
+			"defaultValue": "",
+			"placeholder": "oC",
+			"description": "Optional unit shown next to the value. Use 'oC' for degrees (special chars not supported on display)."
+		},
+		{
+			"key": "unitPosition",
+			"label": "Unit position",
+			"type": "select",
+			"defaultValue": "after",
+			"options": [
+				{ "label": "Before value", "value": "before" },
+				{ "label": "After value", "value": "after" }
+			]
+		},
+		{
+			"key": "unitFont",
+			"label": "Unit size",
+			"type": "select",
+			"defaultValue": "2",
+			"options": [
+				{ "label": "Pixel tiny", "value": "1" },
+				{ "label": "Compact", "value": "2" },
+				{ "label": "Large", "value": "4" }
+			]
+		},
+		{
+			"key": "unitColor",
+			"label": "Unit color",
+			"type": "color",
+			"defaultValue": "#ffffff"
+		},
+		{
+			"key": "titleFont",
+			"label": "Title size",
+			"type": "select",
+			"defaultValue": "2",
+			"options": [
+				{ "label": "Pixel tiny", "value": "1" },
+				{ "label": "Compact", "value": "2" },
+				{ "label": "Large", "value": "4" }
+			]
+		},
+		{
+			"key": "titleHorizontalAlign",
+			"label": "Title position",
+			"type": "select",
+			"defaultValue": "center",
+			"options": [
+				{ "label": "Left", "value": "left" },
+				{ "label": "Center", "value": "center" },
+				{ "label": "Right", "value": "right" }
+			]
+		},
+		{
+			"key": "titleColor",
+			"label": "Title color",
+			"type": "color",
+			"defaultValue": "#00ffff"
+		},
+		{
+			"key": "valueFont",
+			"label": "Value size",
+			"type": "select",
+			"defaultValue": "4",
+			"options": [
+				{ "label": "Pixel tiny", "value": "1" },
+				{ "label": "Compact", "value": "2" },
+				{ "label": "Large", "value": "4" }
+			]
+		},
+		{
+			"key": "valueHorizontalAlign",
+			"label": "Value position",
+			"type": "select",
+			"defaultValue": "center",
+			"options": [
+				{ "label": "Left", "value": "left" },
+				{ "label": "Center", "value": "center" },
+				{ "label": "Right", "value": "right" }
+			]
+		},
+		{
+			"key": "valueColor",
+			"label": "Value color",
+			"type": "color",
+			"defaultValue": "#ffffff"
+		},
+		{
+			"key": "verticalAlign",
+			"label": "Vertical align",
+			"type": "select",
+			"defaultValue": "center",
+			"options": [
+				{ "label": "Top", "value": "top" },
+				{ "label": "Center", "value": "center" },
+				{ "label": "Bottom", "value": "bottom" }
+			]
+		},
+		{
+			"key": "offsetX",
+			"label": "Offset X",
+			"type": "number",
+			"defaultValue": 0,
+			"min": -100,
+			"max": 100,
+			"step": 1
+		},
+		{
+			"key": "offsetY",
+			"label": "Offset Y",
+			"type": "number",
+			"defaultValue": 0,
+			"min": -100,
+			"max": 100,
+			"step": 1
+		}
+	],
+	"settingGroups": [
+		{
+			"title": "Connection",
+			"fieldKeys": ["haUrl", "haToken"]
+		},
+		{
+			"title": "Sensor",
+			"fieldKeys": ["entityId"]
+		},
+		{
+			"title": "Title",
+			"fieldKeys": ["title", "titleFont", "titleHorizontalAlign", "titleColor"]
+		},
+		{
+			"title": "Value",
+			"fieldKeys": ["valueFont", "valueHorizontalAlign", "valueColor"]
+		},
+		{
+			"title": "Unit",
+			"fieldKeys": ["unit", "unitPosition", "unitFont", "unitColor"]
+		},
+		{
+			"title": "Layout",
+			"fieldKeys": ["verticalAlign", "offsetX", "offsetY"]
+		}
+	]
+}

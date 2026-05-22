@@ -1,0 +1,19 @@
+{
+	"id": "next",
+	"version": "0.1.0",
+	"displayName": "Next",
+	"description": "Displays a touch button that switches to the next page.",
+	"defaultSize": {
+		"colSpan": 1,
+		"rowSpan": 1
+	},
+	"capabilities": ["touch"],
+	"firmware": {
+		"type": "platformio-library",
+		"path": ".",
+		"include": "NextPlugin.h",
+		"renderFunction": "renderNextPlugin",
+		"handleTouchFunction": "nextPluginHandleTouch"
+	},
+	"configFields": []
+}

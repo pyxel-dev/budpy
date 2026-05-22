@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+
+firmware/.pio/
+firmware/.vscode/
+firmware/include/version.generated.h
+
+app/public/firmware/*.bin
+app/public/firmware/manifest.json

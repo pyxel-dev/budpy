@@ -1,0 +1,198 @@
+{
+	"id": "weather",
+	"version": "0.1.0",
+	"displayName": "Weather",
+	"description": "Displays an OpenWeatherMap daily forecast tile.",
+	"defaultSize": {
+		"colSpan": 1,
+		"rowSpan": 1
+	},
+	"capabilities": ["network"],
+	"firmware": {
+		"type": "platformio-library",
+		"path": ".",
+		"include": "WeatherPlugin.h",
+		"renderFunction": "renderWeatherPlugin"
+	},
+	"configFields": [
+		{
+			"key": "apiKey",
+			"label": "API key",
+			"type": "text",
+			"required": true,
+			"maxLength": 128,
+			"placeholder": "OpenWeatherMap API key"
+		},
+		{
+			"key": "city",
+			"label": "City",
+			"type": "text",
+			"required": true,
+			"defaultValue": "Paris,FR",
+			"placeholder": "Paris,FR"
+		},
+		{
+			"key": "dayOffset",
+			"label": "Day",
+			"type": "select",
+			"defaultValue": "0",
+			"options": [
+				{ "label": "Today", "value": "0" },
+				{ "label": "D+1", "value": "1" },
+				{ "label": "D+2", "value": "2" },
+				{ "label": "D+3", "value": "3" },
+				{ "label": "D+4", "value": "4" }
+			]
+		},
+		{
+			"key": "hour",
+			"label": "Time slot",
+			"type": "select",
+			"defaultValue": "any",
+			"options": [
+				{ "label": "All day", "value": "any" },
+				{ "label": "00:00", "value": "00" },
+				{ "label": "03:00", "value": "03" },
+				{ "label": "06:00", "value": "06" },
+				{ "label": "09:00", "value": "09" },
+				{ "label": "12:00", "value": "12" },
+				{ "label": "15:00", "value": "15" },
+				{ "label": "18:00", "value": "18" },
+				{ "label": "21:00", "value": "21" },
+				{ "label": "H+1 (in 1 hour)", "value": "h+1" },
+				{ "label": "H+3 (in 3 hours)", "value": "h+3" },
+				{ "label": "H+6 (in 6 hours)", "value": "h+6" },
+				{ "label": "H+12 (in 12 hours)", "value": "h+12" },
+				{ "label": "H+24 (tomorrow)", "value": "h+24" }
+			]
+		},
+		{
+			"key": "title",
+			"label": "Title",
+			"type": "text",
+			"defaultValue": "",
+			"maxLength": 32,
+			"placeholder": "Leave empty to use day label"
+		},
+		{
+			"key": "showIcon",
+			"label": "Show icon",
+			"type": "boolean",
+			"defaultValue": true
+		},
+		{
+			"key": "value1",
+			"label": "Value 1",
+			"type": "select",
+			"defaultValue": "none",
+			"disabledWhen": { "field": "showIcon", "equals": true },
+			"options": [
+				{ "label": "None", "value": "none" },
+				{ "label": "Min temperature", "value": "temp_min" },
+				{ "label": "Max temperature", "value": "temp_max" },
+				{ "label": "Feels like (min)", "value": "feels_like_min" },
+				{ "label": "Feels like (max)", "value": "feels_like_max" },
+				{ "label": "Humidity", "value": "humidity" },
+				{ "label": "Pressure", "value": "pressure" },
+				{ "label": "Wind speed", "value": "wind_speed" },
+				{ "label": "Wind direction", "value": "wind_dir" },
+				{ "label": "Rain", "value": "rain" },
+				{ "label": "Precipitation %", "value": "pop" },
+				{ "label": "Cloud cover", "value": "clouds" }
+			]
+		},
+		{
+			"key": "value2",
+			"label": "Value 2",
+			"type": "select",
+			"defaultValue": "none",
+			"disabledWhen": { "field": "showIcon", "equals": true },
+			"options": [
+				{ "label": "None", "value": "none" },
+				{ "label": "Min temperature", "value": "temp_min" },
+				{ "label": "Max temperature", "value": "temp_max" },
+				{ "label": "Feels like (min)", "value": "feels_like_min" },
+				{ "label": "Feels like (max)", "value": "feels_like_max" },
+				{ "label": "Humidity", "value": "humidity" },
+				{ "label": "Pressure", "value": "pressure" },
+				{ "label": "Wind speed", "value": "wind_speed" },
+				{ "label": "Wind direction", "value": "wind_dir" },
+				{ "label": "Rain", "value": "rain" },
+				{ "label": "Precipitation %", "value": "pop" },
+				{ "label": "Cloud cover", "value": "clouds" }
+			]
+		},
+		{
+			"key": "value3",
+			"label": "Value 3",
+			"type": "select",
+			"defaultValue": "temp_min",
+			"options": [
+				{ "label": "None", "value": "none" },
+				{ "label": "Min temperature", "value": "temp_min" },
+				{ "label": "Max temperature", "value": "temp_max" },
+				{ "label": "Feels like (min)", "value": "feels_like_min" },
+				{ "label": "Feels like (max)", "value": "feels_like_max" },
+				{ "label": "Humidity", "value": "humidity" },
+				{ "label": "Pressure", "value": "pressure" },
+				{ "label": "Wind speed", "value": "wind_speed" },
+				{ "label": "Wind direction", "value": "wind_dir" },
+				{ "label": "Rain", "value": "rain" },
+				{ "label": "Precipitation %", "value": "pop" },
+				{ "label": "Cloud cover", "value": "clouds" }
+			]
+		},
+		{
+			"key": "value4",
+			"label": "Value 4",
+			"type": "select",
+			"defaultValue": "temp_max",
+			"options": [
+				{ "label": "None", "value": "none" },
+				{ "label": "Min temperature", "value": "temp_min" },
+				{ "label": "Max temperature", "value": "temp_max" },
+				{ "label": "Feels like (min)", "value": "feels_like_min" },
+				{ "label": "Feels like (max)", "value": "feels_like_max" },
+				{ "label": "Humidity", "value": "humidity" },
+				{ "label": "Pressure", "value": "pressure" },
+				{ "label": "Wind speed", "value": "wind_speed" },
+				{ "label": "Wind direction", "value": "wind_dir" },
+				{ "label": "Rain", "value": "rain" },
+				{ "label": "Precipitation %", "value": "pop" },
+				{ "label": "Cloud cover", "value": "clouds" }
+			]
+		},
+		{
+			"key": "iconColor",
+			"label": "Icon color",
+			"type": "color",
+			"defaultValue": "#ffd166"
+		},
+		{
+			"key": "labelColor",
+			"label": "Label color",
+			"type": "color",
+			"defaultValue": "#00ffff"
+		},
+		{
+			"key": "valueColor",
+			"label": "Value color",
+			"type": "color",
+			"defaultValue": "#ffffff"
+		}
+	],
+	"settingGroups": [
+		{
+			"title": "Connection",
+			"fieldKeys": ["apiKey", "city"]
+		},
+		{
+			"title": "Forecast",
+			"fieldKeys": ["dayOffset", "hour", "title", "showIcon", "value1", "value2", "value3", "value4"]
+		},
+		{
+			"title": "Style",
+			"fieldKeys": ["iconColor", "labelColor", "valueColor"]
+		}
+	]
+}

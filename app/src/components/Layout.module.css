@@ -1,0 +1,205 @@
+.layout-center {
+  min-width: 0;
+}
+
+:global(.app-panel-title).layout-center-label-btn {
+  color: var(--link);
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+:global(.app-panel-title).layout-center-label-btn:hover {
+  opacity: 0.75;
+}
+
+.layout-center-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.layout-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--line);
+  padding: 1rem;
+  flex-shrink: 0;
+  min-height: var(--dashboard-footer-height);
+  overflow-x: auto;
+}
+
+.layout-page-bar,
+.layout-orientation-bar {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.layout-page-bar button,
+.layout-orientation-bar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 1rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: transparent;
+}
+
+.layout-page-bar button {
+  width: 2rem;
+  padding: 0;
+  font-weight: 700;
+}
+
+.layout-page-bar button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.layout-page-bar button[data-active="true"],
+.layout-orientation-bar button[data-active="true"] {
+  background: var(--surface-muted);
+  color: var(--foreground);
+}
+
+.orientation-icon {
+  position: relative;
+  display: block;
+  width: 14px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.orientation-icon::after {
+  content: "";
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  transform: translateX(-50%);
+}
+
+.orientation-icon[data-orientation="90"] {
+  transform: rotate(90deg);
+}
+.orientation-icon[data-orientation="180"] {
+  transform: rotate(180deg);
+}
+.orientation-icon[data-orientation="270"] {
+  transform: rotate(270deg);
+}
+
+.layout-center-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.layout-right {
+  min-width: 0;
+}
+
+:global(.icon-button).layout-right-close {
+  display: none;
+}
+
+.layout-right-content {
+  padding: 1rem;
+}
+
+.layout-right-footer {
+  gap: 0.375rem;
+}
+
+.layout-right-credit {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.layout-about-btn {
+  color: var(--faint);
+  padding: 0;
+  transition: color 0.1s;
+}
+
+.layout-about-btn:hover {
+  color: var(--muted);
+}
+
+.about-dialog {
+  width: min(420px, calc(100vw - 2rem));
+}
+
+.about-dialog-links {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+  padding-top: 0.875rem;
+  display: grid;
+  gap: 0.375rem;
+}
+
+.about-dialog-links a {
+  font-size: 0.8125rem;
+  color: var(--foreground);
+  text-decoration: none;
+}
+
+.about-dialog-links a:hover {
+  text-decoration: underline;
+}
+
+:global(.icon-button).mobile-panel-toggle {
+  display: none;
+  color: var(--foreground);
+}
+
+@media (max-width: 768px) {
+  :global(.icon-button).mobile-panel-toggle {
+    display: flex;
+  }
+
+  :global(.app-panel).layout-right {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: var(--background);
+  }
+
+  :global(.app-panel).layout-right[data-mobile-open="true"] {
+    display: flex;
+  }
+
+  :global(.icon-button).layout-right-close {
+    display: inline-flex;
+  }
+
+  :global(.app-panel--center).layout-center {
+    border: none;
+  }
+
+  .layout-control-bar {
+    justify-content: flex-start;
+  }
+}

@@ -1,0 +1,27 @@
+{
+	"id": "template-plugin",
+	"version": "0.1.0",
+	"displayName": "Template Plugin",
+	"description": "Displays a configurable text label.",
+	"defaultSize": {
+		"colSpan": 2,
+		"rowSpan": 1
+	},
+	"capabilities": [],
+	"firmware": {
+		"type": "platformio-library",
+		"path": ".",
+		"include": "TemplatePlugin.h",
+		"renderFunction": "renderTemplatePlugin",
+		"needsSecondTicksFunction": "templatePluginNeedsSecondTicks"
+	},
+	"configFields": [
+		{
+			"key": "label",
+			"label": "Label",
+			"type": "text",
+			"defaultValue": "Hello Budpy",
+			"placeholder": "Hello Budpy"
+		}
+	]
+}

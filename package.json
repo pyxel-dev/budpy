@@ -1,0 +1,25 @@
+{
+	"name": "budpy",
+	"version": "0.0.0",
+	"description": "Budpy is an autonomous ESP32 CYD dashboard.",
+	"private": true,
+	"packageManager": "pnpm@10.33.2",
+	"repository": {
+		"url": "https://github.com/pyxel-dev/budpy"
+	},
+	"author": {
+		"name": "Kevin Py",
+		"url": "https://kevinpy.com"
+	},
+	"scripts": {
+		"build": "pnpm -r build",
+		"test": "pnpm -r test",
+		"typecheck": "pnpm -r typecheck",
+		"generate:plugins": "node scripts/generate-plugin-registry.mjs",
+		"firmware:publish": "node scripts/firmware-publish.mjs",
+		"firmware:build": "node scripts/firmware-publish.mjs --build"
+	},
+	"devDependencies": {
+		"typescript": "^5.8.3"
+	}
+}
