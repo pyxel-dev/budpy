@@ -179,7 +179,6 @@ HaSensorConfig readConfig(const String& configJson) {
 // ---------------------------------------------------------------------------
 
 constexpr uint8_t MAX_HA_CACHE = 12;
-constexpr uint8_t MAX_HA_RENDER_CACHE = 12;
 constexpr uint32_t FETCH_INTERVAL_MS = 60000UL;
 
 struct HaCache {
@@ -202,7 +201,7 @@ struct HaRenderCache {
 };
 
 static HaCache haCache[MAX_HA_CACHE];
-static HaRenderCache haRenderCache[MAX_HA_RENDER_CACHE];
+static HaRenderCache haRenderCache[MAX_LAYOUT_CELLS];
 static uint8_t haCacheCount = 0;
 
 HaCache* findOrCreateCache(const String& entityId) {
@@ -383,7 +382,7 @@ void renderHaSensorPlugin(PluginRenderContext& context) {
     displayValue = cache->value;
   }
 
-  HaRenderCache* renderCache = context.cellIndex < MAX_HA_RENDER_CACHE
+  HaRenderCache* renderCache = context.cellIndex < MAX_LAYOUT_CELLS
                                    ? &haRenderCache[context.cellIndex]
                                    : nullptr;
   if (!context.forceClear && renderCache != nullptr &&

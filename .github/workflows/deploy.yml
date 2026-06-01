@@ -30,6 +30,18 @@ jobs:
         with:
           node-version: 24
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install PlatformIO CLI
+        run: python -m pip install --upgrade pip platformio
+        working-directory: .
+
+      - name: Verify PlatformIO
+        run: pio --version
+        working-directory: .
+
       - run: pnpm install --frozen-lockfile
       - run: pnpm firmware:build
         working-directory: .
