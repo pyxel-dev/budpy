@@ -31,6 +31,8 @@ jobs:
           node-version: 24
 
       - run: pnpm install --frozen-lockfile
+      - run: pnpm firmware:build
+        working-directory: .
       - run: pnpm build
 
       - uses: actions/upload-pages-artifact@v3
