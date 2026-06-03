@@ -3,6 +3,7 @@
 #include "generated/PluginRegistrations.h"
 
 #include "ClockPlugin.h"
+#include "HaCoverPlugin.h"
 #include "HaSensorPlugin.h"
 #include "NextPlugin.h"
 #include "WeatherPlugin.h"
@@ -13,6 +14,12 @@ const PluginRegistration pluginRegistrations[] = {
         renderClockPlugin,
         clockPluginNeedsSecondTicks,
         clockPluginHandleTouch,
+    },
+    {
+        "ha-cover",
+        renderHaCoverPlugin,
+        nullptr,
+        handleTouchHaCoverPlugin,
     },
     {
         "ha-sensor",
@@ -34,4 +41,4 @@ const PluginRegistration pluginRegistrations[] = {
     },
 };
 
-const size_t pluginRegistrationCount = 4;
+const size_t pluginRegistrationCount = 5;

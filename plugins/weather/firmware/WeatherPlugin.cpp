@@ -12,7 +12,6 @@ namespace {
 
 constexpr uint8_t MAX_WEATHER_CACHE = 4;
 constexpr uint8_t MAX_WEATHER_DAYS = 5;
-constexpr uint8_t MAX_WEATHER_RENDER_CACHE = 12;
 constexpr uint32_t FETCH_INTERVAL_MS = 60UL * 60UL * 1000UL;
 constexpr uint32_t ERROR_RETRY_INTERVAL_MS = 60UL * 60UL * 1000UL;
 
@@ -91,7 +90,7 @@ struct WeatherRenderCache {
 };
 
 static WeatherCache weatherCache[MAX_WEATHER_CACHE];
-static WeatherRenderCache weatherRenderCache[MAX_WEATHER_RENDER_CACHE];
+static WeatherRenderCache weatherRenderCache[MAX_LAYOUT_CELLS];
 static uint8_t weatherCacheCount = 0;
 
 int hexNibble(char c) {
@@ -881,7 +880,7 @@ void renderWeatherPlugin(PluginRenderContext& context) {
     }
   }
 
-  WeatherRenderCache* renderCache = context.cellIndex < MAX_WEATHER_RENDER_CACHE
+  WeatherRenderCache* renderCache = context.cellIndex < MAX_LAYOUT_CELLS
                                         ? &weatherRenderCache[context.cellIndex]
                                         : nullptr;
   if (!context.forceClear && renderCache != nullptr &&
