@@ -1,0 +1,209 @@
+{
+	"id": "ha-cover",
+	"version": "0.1.0",
+	"displayName": "Home Assistant Cover",
+	"description": "Displays the state of a Home Assistant cover entity (blind, curtain, door, garage, gate, etc.) with a customisable icon.",
+	"defaultSize": {
+		"colSpan": 1,
+		"rowSpan": 2
+	},
+	"capabilities": ["ha", "network", "touch"],
+	"firmware": {
+		"type": "platformio-library",
+		"path": ".",
+		"include": "HaCoverPlugin.h",
+		"renderFunction": "renderHaCoverPlugin",
+		"handleTouchFunction": "handleTouchHaCoverPlugin"
+	},
+	"configFields": [
+		{
+			"key": "haUrl",
+			"label": "Home Assistant URL",
+			"type": "text",
+			"required": true,
+			"placeholder": "http://192.168.0.2:8123",
+			"description": "The base URL of your Home Assistant instance (use IP address, not homeassistant.local)."
+		},
+		{
+			"key": "haToken",
+			"label": "Long-lived access token",
+			"type": "text",
+			"required": true,
+			"maxLength": 512,
+			"placeholder": "eyJ...",
+			"description": "A long-lived access token generated in your Home Assistant profile."
+		},
+		{
+			"key": "entityId",
+			"label": "Entity ID",
+			"type": "text",
+			"required": true,
+			"maxLength": 160,
+			"placeholder": "cover.living_room_blind",
+			"description": "The entity ID of the cover to display (e.g. cover.garage_door)."
+		},
+		{
+			"key": "coverType",
+			"label": "Cover type",
+			"type": "select",
+			"defaultValue": "none",
+			"description": "The type of cover — determines the icon displayed.",
+			"options": [
+				{ "label": "None (generic)", "value": "none" },
+				{ "label": "Awning", "value": "awning" },
+				{ "label": "Blind", "value": "blind" },
+				{ "label": "Curtain", "value": "curtain" },
+				{ "label": "Damper", "value": "damper" },
+				{ "label": "Door", "value": "door" },
+				{ "label": "Garage", "value": "garage" },
+				{ "label": "Gate", "value": "gate" },
+				{ "label": "Shade", "value": "shade" },
+				{ "label": "Shutter", "value": "shutter" },
+				{ "label": "Window", "value": "window" }
+			]
+		},
+		{
+			"key": "title",
+			"label": "Title",
+			"type": "text",
+			"defaultValue": "",
+			"placeholder": "Living room blind",
+			"description": "Optional label shown above the icon."
+		},
+		{
+			"key": "iconSize",
+			"label": "Icon size",
+			"type": "select",
+			"defaultValue": "36",
+			"options": [
+				{ "label": "Small (24 px)", "value": "24" },
+				{ "label": "Medium (36 px)", "value": "36" },
+				{ "label": "Large (48 px)", "value": "48" }
+			]
+		},
+		{
+			"key": "iconOpenColor",
+			"label": "Icon color — open",
+			"type": "color",
+			"defaultValue": "#00cc44",
+			"description": "Color of the icon when the cover is open (or opening)."
+		},
+		{
+			"key": "iconClosedColor",
+			"label": "Icon color — closed",
+			"type": "color",
+			"defaultValue": "#ff4400",
+			"description": "Color of the icon when the cover is closed (or closing)."
+		},
+		{
+			"key": "showStateText",
+			"label": "Show state text",
+			"type": "select",
+			"defaultValue": "yes",
+			"options": [
+				{ "label": "Yes", "value": "yes" },
+				{ "label": "No", "value": "no" }
+			]
+		},
+		{
+			"key": "titleFont",
+			"label": "Title size",
+			"type": "select",
+			"defaultValue": "2",
+			"options": [
+				{ "label": "Pixel tiny", "value": "1" },
+				{ "label": "Compact", "value": "2" },
+				{ "label": "Large", "value": "4" }
+			]
+		},
+		{
+			"key": "titleHorizontalAlign",
+			"label": "Title position",
+			"type": "select",
+			"defaultValue": "center",
+			"options": [
+				{ "label": "Left", "value": "left" },
+				{ "label": "Center", "value": "center" },
+				{ "label": "Right", "value": "right" }
+			]
+		},
+		{
+			"key": "titleColor",
+			"label": "Title color",
+			"type": "color",
+			"defaultValue": "#00ffff"
+		},
+		{
+			"key": "stateFont",
+			"label": "State text size",
+			"type": "select",
+			"defaultValue": "2",
+			"options": [
+				{ "label": "Pixel tiny", "value": "1" },
+				{ "label": "Compact", "value": "2" },
+				{ "label": "Large", "value": "4" }
+			]
+		},
+		{
+			"key": "stateColor",
+			"label": "State text color",
+			"type": "color",
+			"defaultValue": "#ffffff"
+		},
+		{
+			"key": "verticalAlign",
+			"label": "Vertical align",
+			"type": "select",
+			"defaultValue": "center",
+			"options": [
+				{ "label": "Top", "value": "top" },
+				{ "label": "Center", "value": "center" },
+				{ "label": "Bottom", "value": "bottom" }
+			]
+		},
+		{
+			"key": "offsetX",
+			"label": "Offset X",
+			"type": "number",
+			"defaultValue": 0,
+			"min": -100,
+			"max": 100,
+			"step": 1
+		},
+		{
+			"key": "offsetY",
+			"label": "Offset Y",
+			"type": "number",
+			"defaultValue": 0,
+			"min": -100,
+			"max": 100,
+			"step": 1
+		}
+	],
+	"settingGroups": [
+		{
+			"title": "Connection",
+			"fieldKeys": ["haUrl", "haToken"]
+		},
+		{
+			"title": "Cover",
+			"fieldKeys": ["entityId", "coverType"]
+		},
+		{
+			"title": "Icon",
+			"fieldKeys": ["iconSize", "iconOpenColor", "iconClosedColor"]
+		},
+		{
+			"title": "Title",
+			"fieldKeys": ["title", "titleFont", "titleHorizontalAlign", "titleColor"]
+		},
+		{
+			"title": "State",
+			"fieldKeys": ["showStateText", "stateFont", "stateColor"]
+		},
+		{
+			"title": "Layout",
+			"fieldKeys": ["verticalAlign", "offsetX", "offsetY"]
+		}
+	]
+}
