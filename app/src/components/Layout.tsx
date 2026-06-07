@@ -39,6 +39,7 @@ import {
   hasLayoutDragData,
 } from "./layout/layoutDrag";
 import { orientationLabels } from "./layout/layoutMessages";
+import packageJson from "../../../package.json";
 
 interface LayoutPageProps {
   orientation: Orientation;
@@ -338,6 +339,8 @@ export function Layout({
     ? getPluginManifest(selectedCell.pluginId, plugins)
     : undefined;
 
+  const version = packageJson.version;
+
   return (
     <>
       <main
@@ -490,7 +493,7 @@ export function Layout({
         </div>
         <footer className={`app-panel-footer ${styles["layout-right-footer"]}`}>
           <span className={styles["layout-right-credit"]}>
-            Created by{" "}
+            v{version} - Created by{" "}
             <a
               href="https://kevinpy.com"
               target="_blank"
@@ -520,7 +523,7 @@ export function Layout({
       >
         <header className="modal-header">
           <h2 id="about-dialog-title" className="modal-title">
-            Budpy
+            Budpy - v{version}
           </h2>
           <button
             type="button"
@@ -550,7 +553,7 @@ export function Layout({
         <ul className={styles["about-dialog-links"]}>
           <li>
             <a
-              href="https://github.com/kevinpy/budpy"
+              href="https://github.com/pyxel-dev/budpy"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -559,7 +562,7 @@ export function Layout({
           </li>
           <li>
             <a
-              href="https://github.com/kevinpy/budpy/blob/main/docs/plugins.md"
+              href="https://github.com/pyxel-dev/budpy/blob/main/docs/plugins.md"
               target="_blank"
               rel="noopener noreferrer"
             >
