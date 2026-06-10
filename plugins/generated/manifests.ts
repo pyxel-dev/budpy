@@ -2248,6 +2248,294 @@ export const pluginManifests = [
     ]
   },
   {
+    "id": "get-data",
+    "version": "0.1.0",
+    "displayName": "Get data",
+    "description": "Fetches JSON data via HTTP GET and displays up to 4 values using dot-notation JSON paths.",
+    "defaultSize": {
+      "colSpan": 1,
+      "rowSpan": 1
+    },
+    "capabilities": [
+      "network"
+    ],
+    "firmware": {
+      "type": "platformio-library",
+      "path": ".",
+      "include": "GetDataPlugin.h",
+      "renderFunction": "renderGetDataPlugin"
+    },
+    "configFields": [
+      {
+        "key": "url",
+        "label": "URL",
+        "type": "text",
+        "required": true,
+        "maxLength": 256,
+        "placeholder": "http://api.example.com/data"
+      },
+      {
+        "key": "param1Key",
+        "label": "Param 1 – key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 64,
+        "placeholder": "key"
+      },
+      {
+        "key": "param1Value",
+        "label": "Param 1 – value",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "value"
+      },
+      {
+        "key": "param2Key",
+        "label": "Param 2 – key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 64,
+        "placeholder": "key"
+      },
+      {
+        "key": "param2Value",
+        "label": "Param 2 – value",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "value"
+      },
+      {
+        "key": "param3Key",
+        "label": "Param 3 – key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 64,
+        "placeholder": "key"
+      },
+      {
+        "key": "param3Value",
+        "label": "Param 3 – value",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "value"
+      },
+      {
+        "key": "refreshInterval",
+        "label": "Refresh (seconds)",
+        "type": "number",
+        "defaultValue": 60,
+        "min": 10,
+        "max": 3600
+      },
+      {
+        "key": "title",
+        "label": "Title",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 32,
+        "placeholder": "My data"
+      },
+      {
+        "key": "valueLayout",
+        "label": "Values layout",
+        "type": "select",
+        "defaultValue": "horizontal",
+        "options": [
+          {
+            "label": "Horizontal",
+            "value": "horizontal"
+          },
+          {
+            "label": "Vertical",
+            "value": "vertical"
+          }
+        ]
+      },
+      {
+        "key": "value1Key",
+        "label": "Value 1 – JSON key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "data.temperature",
+        "description": "Dot-notation path into the JSON response, e.g. data.temperature"
+      },
+      {
+        "key": "value1Label",
+        "label": "Value 1 – Label",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 16,
+        "placeholder": "Temp"
+      },
+      {
+        "key": "value2Key",
+        "label": "Value 2 – JSON key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "data.humidity"
+      },
+      {
+        "key": "value2Label",
+        "label": "Value 2 – Label",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 16,
+        "placeholder": "Humidity"
+      },
+      {
+        "key": "value3Key",
+        "label": "Value 3 – JSON key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "",
+        "disabledWhen": {
+          "field": "valueLayout",
+          "equals": "vertical"
+        }
+      },
+      {
+        "key": "value3Label",
+        "label": "Value 3 – Label",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 16,
+        "placeholder": "",
+        "disabledWhen": {
+          "field": "valueLayout",
+          "equals": "vertical"
+        }
+      },
+      {
+        "key": "value4Key",
+        "label": "Value 4 – JSON key",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 128,
+        "placeholder": "",
+        "disabledWhen": {
+          "field": "valueLayout",
+          "equals": "vertical"
+        }
+      },
+      {
+        "key": "value4Label",
+        "label": "Value 4 – Label",
+        "type": "text",
+        "defaultValue": "",
+        "maxLength": 16,
+        "placeholder": "",
+        "disabledWhen": {
+          "field": "valueLayout",
+          "equals": "vertical"
+        }
+      },
+      {
+        "key": "titleFont",
+        "label": "Title size",
+        "type": "select",
+        "defaultValue": "2",
+        "options": [
+          {
+            "label": "Pixel tiny",
+            "value": "1"
+          },
+          {
+            "label": "Compact",
+            "value": "2"
+          },
+          {
+            "label": "Large",
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "key": "valueFont",
+        "label": "Value size",
+        "type": "select",
+        "defaultValue": "2",
+        "options": [
+          {
+            "label": "Pixel tiny",
+            "value": "1"
+          },
+          {
+            "label": "Compact",
+            "value": "2"
+          },
+          {
+            "label": "Large",
+            "value": "4"
+          }
+        ]
+      },
+      {
+        "key": "titleColor",
+        "label": "Title color",
+        "type": "color",
+        "defaultValue": "#00ffff"
+      },
+      {
+        "key": "labelColor",
+        "label": "Label color",
+        "type": "color",
+        "defaultValue": "#00ffff"
+      },
+      {
+        "key": "valueColor",
+        "label": "Value color",
+        "type": "color",
+        "defaultValue": "#ffffff"
+      }
+    ],
+    "settingGroups": [
+      {
+        "title": "Connection",
+        "fieldKeys": [
+          "url",
+          "param1Key",
+          "param1Value",
+          "param2Key",
+          "param2Value",
+          "param3Key",
+          "param3Value",
+          "refreshInterval"
+        ]
+      },
+      {
+        "title": "Display",
+        "fieldKeys": [
+          "title",
+          "valueLayout",
+          "value1Key",
+          "value1Label",
+          "value2Key",
+          "value2Label",
+          "value3Key",
+          "value3Label",
+          "value4Key",
+          "value4Label"
+        ]
+      },
+      {
+        "title": "Style",
+        "fieldKeys": [
+          "titleFont",
+          "titleColor",
+          "valueFont",
+          "labelColor",
+          "valueColor"
+        ]
+      }
+    ]
+  },
+  {
     "id": "ha-cover",
     "version": "0.1.0",
     "displayName": "Home Assistant Cover",
