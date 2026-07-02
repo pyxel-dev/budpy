@@ -327,12 +327,15 @@ export function buildBudpyConfig(input: BudpyConfigInput): BudpyConfig {
 	const fittedCells = fitCellsToOrientation(input.cells, input.orientation);
 	const pageCount = getLayoutPageCount(fittedCells);
 	const backgroundColor = normalizeColorValue(input.backgroundColor);
-	const firstConfig = fittedCells[0]?.config ?? {};
-	const locale = (firstConfig.locale as SupportedLocale) ?? "fr-FR";
+	const localeValue = fittedCells.find(
+		(cell) => typeof cell.config.locale === "string",
+	)?.config.locale;
+	const locale = (localeValue as SupportedLocale) ?? "fr-FR";
+	const timezoneValue = fittedCells.find(
+		(cell) => typeof cell.config.timezone === "string",
+	)?.config.timezone;
 	const timezone =
-		typeof firstConfig.timezone === "string"
-			? firstConfig.timezone
-			: "Europe/Paris";
+		typeof timezoneValue === "string" ? timezoneValue : "Europe/Paris";
 	const cells = fittedCells.map(
 		({
 			instanceId: _instanceId,

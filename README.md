@@ -19,6 +19,21 @@ You are the possibility to create multiple pages, and to switch between them. Yo
 
 See [docs/plugins.md](docs/plugins.md) for plugin development instructions.
 
+## Contributing
+
+Contributions are welcome! Read the [contributing guide](CONTRIBUTING.md) to
+get started — it covers the development setup, the pull request workflow, and
+how to create a plugin. Please also review the
+[code of conduct](CODE_OF_CONDUCT.md).
+
+- Found a bug? [Open a bug report](https://github.com/pyxel-dev/budpy/issues/new/choose)
+- Have an idea? Open a feature or plugin request
+- Security issue? See the [security policy](SECURITY.md)
+
 ## 3D print
 
 You can find a lot of 3D printable cases for the ESP32 CYD on [Thingiverse](https://www.thingiverse.com/search?q=esp32+cyd&type=things&sort=relevant). I recommend the [Aura case](https://makerworld.com/fr/models/1382304-aura-smart-weather-forecast-display).
+
+## License
+
+Budpy is released under the [MIT License](LICENSE).

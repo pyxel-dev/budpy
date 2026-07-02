@@ -1,0 +1,37 @@
+name: Plugin request
+description: Suggest a new plugin (widget) for the Budpy dashboard.
+title: "[Plugin]: "
+labels: ["enhancement", "plugin"]
+body:
+  - type: input
+    id: name
+    attributes:
+      label: Plugin name
+      placeholder: e.g. Calendar, Stock ticker, Air quality
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What should it display?
+      description: Describe the information shown on the screen and how it should look.
+    validations:
+      required: true
+  - type: textarea
+    id: data-source
+    attributes:
+      label: Data source
+      description: Where does the data come from? (public API, Home Assistant entity, device-local, ...) Include API links if relevant.
+    validations:
+      required: true
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: Are you willing to implement it?
+      description: Plugins are self-contained — see docs/plugins.md for the guide.
+      options:
+        - Yes, I plan to open a PR
+        - Maybe, with some guidance
+        - No, just suggesting the idea
+    validations:
+      required: true

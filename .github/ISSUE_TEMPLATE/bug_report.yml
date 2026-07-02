@@ -1,0 +1,72 @@
+name: Bug report
+description: Report something that does not work as expected.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of Budpy is affected?
+      options:
+        - Web app (layout editor / provisioning)
+        - Firmware (ESP32 device)
+        - A specific plugin
+        - Documentation
+        - Other / not sure
+    validations:
+      required: true
+  - type: input
+    id: plugin
+    attributes:
+      label: Plugin
+      description: If a specific plugin is affected, which one?
+      placeholder: e.g. clock, weather, ha-sensor
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: What did you see?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the web app
+        2. Add a plugin ...
+        3. Send the config to the ESP32 ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Budpy version
+      description: Version shown in the web app footer, or firmware version flashed on the device.
+      placeholder: e.g. 1.2.0
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      description: For firmware issues, which board are you using?
+      placeholder: e.g. ESP32-2432S028R (CYD)
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: For web app issues (Web Serial requires Chrome or Edge).
+      placeholder: e.g. Chrome 130 on macOS
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Serial monitor output, browser console errors, or screenshots.
+      render: shell

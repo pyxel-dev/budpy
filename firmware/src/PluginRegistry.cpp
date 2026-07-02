@@ -144,8 +144,13 @@ void renderPlugins(Renderer& renderer, const AppConfig& config,
     }
 
     struct tm cellTimeInfo;
+    // Named timezones keep DST rules, so only fall back to the fixed UTC
+    // offset captured by the web app when the timezone is not known natively.
+    const bool useUtcOffset = cell.pluginId == "clock" &&
+                              cell.clock.hasTimezoneOffsetMinutes &&
+                              !isNativelySupportedTimezone(cell.clock.timezone);
     const bool hasCellTime =
-        cell.pluginId == "clock" && cell.clock.hasTimezoneOffsetMinutes
+        useUtcOffset
             ? getTimePartsForUtcOffsetMinutes(cell.clock.timezoneOffsetMinutes,
                                               cellTimeInfo)
             : getTimePartsForTimezone(cell.pluginId == "clock"
