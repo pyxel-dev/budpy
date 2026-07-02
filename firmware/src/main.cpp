@@ -278,7 +278,7 @@ void loop() {
 
   const uint32_t now = millis();
   if (runtimeReady && renderer != nullptr &&
-      now - lastRenderMs >= RENDER_INTERVAL_MS) {
+      (renderDirty || now - lastRenderMs >= RENDER_INTERVAL_MS)) {
     lastRenderMs = now;
     renderPlugins(*renderer, appConfig, renderDirty);
     renderDirty = false;

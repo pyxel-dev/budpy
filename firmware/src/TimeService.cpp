@@ -9,7 +9,8 @@ namespace {
 constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 20000;
 constexpr uint32_t NTP_SYNC_TIMEOUT_MS = 15000;
 
-const char* timezoneToPosix(const String& timezone) {
+// Returns the POSIX TZ string for natively supported timezones, or nullptr.
+const char* findPosixTimezone(const String& timezone) {
   if (timezone == "Europe/Paris") {
     return "CET-1CEST,M3.5.0/2,M10.5.0/3";
   }
@@ -39,7 +40,12 @@ const char* timezoneToPosix(const String& timezone) {
     return "AEST-10AEDT,M10.1.0/2,M4.1.0/3";
   }
 
-  return "UTC0";
+  return nullptr;
+}
+
+const char* timezoneToPosix(const String& timezone) {
+  const char* posixTimezone = findPosixTimezone(timezone);
+  return posixTimezone != nullptr ? posixTimezone : "UTC0";
 }
 
 bool readTimePartsForPosixTimezone(const char* posixTimezone,
@@ -100,6 +106,10 @@ bool connectWifiAndSyncTime(const AppConfig& config, String& error) {
 
 bool getLocalTimeParts(struct tm& timeInfo) {
   return getLocalTime(&timeInfo, 250);
+}
+
+bool isNativelySupportedTimezone(const String& timezone) {
+  return findPosixTimezone(timezone) != nullptr;
 }
 
 bool getTimePartsForTimezone(const String& timezone, struct tm& timeInfo) {

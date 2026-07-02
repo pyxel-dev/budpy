@@ -550,9 +550,13 @@ String dayLabel(uint8_t dayOffset) {
 String weatherDayDisplayKey(const WeatherDay& day) {
   return String(static_cast<int>(day.minTemp)) + ":" +
          String(static_cast<int>(day.maxTemp)) + ":" +
+         String(static_cast<int>(day.minFeelsLike)) + ":" +
+         String(static_cast<int>(day.maxFeelsLike)) + ":" +
          String(static_cast<int>(day.humidity)) + ":" +
+         String(static_cast<int>(day.pressure)) + ":" +
          String(day.maxWindSpeed, 0) + ":" + String(day.windDeg) + ":" +
-         String(day.totalRain, 1) + ":" + String(static_cast<int>(day.maxPop));
+         String(day.totalRain, 1) + ":" + String(static_cast<int>(day.maxPop)) +
+         ":" + String(static_cast<int>(day.avgClouds));
 }
 
 const char* windDirectionStr(uint16_t deg) {
