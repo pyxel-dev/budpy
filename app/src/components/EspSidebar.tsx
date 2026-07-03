@@ -20,9 +20,15 @@ declare module "react" {
 import {
   buildBudpyConfig,
   defaultBackgroundColor,
+  maxScreenIdleHours,
+  maxScreenIdleMinutes,
   normalizeBrightnessMode,
   normalizeBrightnessValue,
   normalizeColorValue,
+  normalizeScreenIdleMinutes,
+  normalizeScreenIdleUnit,
+  normalizeScreenSleepDimBrightness,
+  normalizeScreenSleepMode,
   type Orientation,
 } from "../lib/config";
 import { saveStoredDeviceSetupInput } from "../lib/deviceSetupStorage";
@@ -98,6 +104,17 @@ export function EspSidebar({
   const brightnessMode = normalizeBrightnessMode(input.brightnessMode);
   const brightnessLabel =
     brightnessMode === "auto" ? "Maximum brightness" : "Brightness";
+  const screenIdleMinutes = normalizeScreenIdleMinutes(input.screenIdleMinutes);
+  const screenIdleUnit = normalizeScreenIdleUnit(input.screenIdleUnit);
+  const screenSleepMode = normalizeScreenSleepMode(input.screenSleepMode);
+  const screenSleepDimBrightness = normalizeScreenSleepDimBrightness(
+    input.screenSleepDimBrightness,
+  );
+  const screenIdleValue =
+    screenIdleUnit === "hours" ? screenIdleMinutes / 60 : screenIdleMinutes;
+  const screenIdleMax =
+    screenIdleUnit === "hours" ? maxScreenIdleHours : maxScreenIdleMinutes;
+  const screenSleepEnabled = screenIdleMinutes > 0;
 
   function updateInput(key: keyof DeviceSetupInput, value: string | number) {
     onInputChange(key, value);
@@ -336,6 +353,81 @@ export function EspSidebar({
                     }
                   />
                 </label>
+                <label className="form-field">
+                  <span>Screen sleep after (0 = never)</span>
+                  <input
+                    name="screenIdleValue"
+                    type="number"
+                    min={0}
+                    max={screenIdleMax}
+                    step={1}
+                    value={screenIdleValue}
+                    onChange={(event) => {
+                      const next = Number(event.target.value);
+                      updateInput(
+                        "screenIdleMinutes",
+                        Math.round(
+                          screenIdleUnit === "hours" ? next * 60 : next,
+                        ),
+                      );
+                    }}
+                  />
+                </label>
+                <label className="form-field">
+                  <span>Sleep unit</span>
+                  <select
+                    name="screenIdleUnit"
+                    value={screenIdleUnit}
+                    onChange={(event) =>
+                      updateInput(
+                        "screenIdleUnit",
+                        event.target.value === "hours" ? "hours" : "minutes",
+                      )
+                    }
+                  >
+                    <option value="minutes">Minutes</option>
+                    <option value="hours">Hours</option>
+                  </select>
+                </label>
+                <label className="form-field">
+                  <span>Screen sleep mode</span>
+                  <select
+                    name="screenSleepMode"
+                    value={screenSleepMode}
+                    disabled={!screenSleepEnabled}
+                    onChange={(event) =>
+                      updateInput(
+                        "screenSleepMode",
+                        event.target.value === "dim" ? "dim" : "off",
+                      )
+                    }
+                  >
+                    <option value="off">Turn off</option>
+                    <option value="dim">Dim</option>
+                  </select>
+                </label>
+                {screenSleepMode === "dim" && (
+                  <label className="form-field">
+                    <span>
+                      Dim brightness —{" "}
+                      {Math.round((screenSleepDimBrightness / 255) * 100)}%
+                    </span>
+                    <input
+                      name="screenSleepDimBrightness"
+                      type="range"
+                      min={0}
+                      max={255}
+                      step={1}
+                      value={screenSleepDimBrightness}
+                      onChange={(event) =>
+                        updateInput(
+                          "screenSleepDimBrightness",
+                          Number(event.target.value),
+                        )
+                      }
+                    />
+                  </label>
+                )}
               </div>
               <button
                 type="submit"

@@ -42,6 +42,10 @@ static uint8_t currentBacklightBrightness = 255;
 static bool backlightBrightnessApplied = false;
 static uint8_t targetBacklightBrightness = 255;
 static bool automaticBrightnessTargetReady = false;
+static uint32_t lastActivityMs = 0;
+static bool screenAsleep = false;
+static uint8_t screenSleepBrightness = 0;
+static bool wakeTouchActive = false;
 static uint16_t smoothedLdrReading = 0;
 static uint16_t ldrMinReading = 0;
 static uint16_t ldrMaxReading = LDR_MAX_READING;
@@ -217,6 +221,9 @@ static void loadConfigOrShowStatus() {
   hasConfig = loadAppConfig(appConfig, error);
   runtimeReady = false;
   renderDirty = true;
+  lastActivityMs = millis();
+  screenAsleep = false;
+  wakeTouchActive = false;
 
   const uint16_t backgroundColor =
       hasConfig ? appConfig.backgroundColor : TFT_BLACK;
@@ -274,17 +281,47 @@ void loop() {
     loadConfigOrShowStatus();
   }
 
-  updateAutomaticBrightness();
-
   const uint32_t now = millis();
-  if (runtimeReady && renderer != nullptr &&
-      (renderDirty || now - lastRenderMs >= RENDER_INTERVAL_MS)) {
-    lastRenderMs = now;
-    renderPlugins(*renderer, appConfig, renderDirty);
-    renderDirty = false;
+  const bool touched = touchServiceTouched();
+
+  // Le geste de réveil ne doit pas aussi activer un widget: on supprime la
+  // distribution tactile jusqu'à ce que le doigt se relève après un réveil.
+  if (wakeTouchActive && !touched) {
+    wakeTouchActive = false;
   }
 
-  if (runtimeReady && renderer != nullptr) {
-    pollPluginTouch(*renderer, appConfig, renderDirty);
+  if (hasConfig && appConfig.screenIdleMinutes > 0) {
+    const uint32_t idleTimeoutMs =
+        static_cast<uint32_t>(appConfig.screenIdleMinutes) * 60000UL;
+    if (touched) {
+      lastActivityMs = now;
+      if (screenAsleep) {
+        screenAsleep = false;
+        wakeTouchActive = true;
+        applyConfiguredBrightness();
+        renderDirty = true;
+      }
+    } else if (!screenAsleep && now - lastActivityMs >= idleTimeoutMs) {
+      screenAsleep = true;
+      screenSleepBrightness = appConfig.screenSleepDim
+                                  ? appConfig.screenSleepDimBrightness
+                                  : 0;
+      applyBacklightBrightness(screenSleepBrightness);
+    }
+  }
+
+  if (!screenAsleep) {
+    updateAutomaticBrightness();
+
+    if (runtimeReady && renderer != nullptr &&
+        (renderDirty || now - lastRenderMs >= RENDER_INTERVAL_MS)) {
+      lastRenderMs = now;
+      renderPlugins(*renderer, appConfig, renderDirty);
+      renderDirty = false;
+    }
+
+    if (runtimeReady && renderer != nullptr && !wakeTouchActive) {
+      pollPluginTouch(*renderer, appConfig, renderDirty);
+    }
   }
 }

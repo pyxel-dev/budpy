@@ -57,6 +57,9 @@ struct AppConfig {
   uint16_t backgroundColor = 0x0000;
   uint8_t brightness = 255;
   bool automaticBrightness = false;
+  uint16_t screenIdleMinutes = 0;
+  bool screenSleepDim = false;
+  uint8_t screenSleepDimBrightness = 12;
   uint8_t cols = 3;
   uint8_t rows = 4;
   uint8_t pageCount = 1;

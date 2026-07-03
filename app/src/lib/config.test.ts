@@ -268,6 +268,36 @@ describe("buildBudpyConfig", () => {
 		expect(config.brightness).toBe(128);
 		expect(config.brightnessMode).toBe("auto");
 	});
+
+	it("defaults screen sleep to disabled", () => {
+		const config = buildBudpyConfig({
+			ssid: "Home",
+			password: "secret-password",
+			orientation: "0",
+			cells: [],
+		});
+
+		expect(config.screenIdleMinutes).toBe(0);
+		expect(config.screenSleepMode).toBe("off");
+		expect(config.screenSleepDimBrightness).toBe(12);
+	});
+
+	it("builds a config with screen sleep settings", () => {
+		const config = buildBudpyConfig({
+			ssid: "Home",
+			password: "secret-password",
+			screenIdleMinutes: 120,
+			screenSleepMode: "dim",
+			screenSleepDimBrightness: 40,
+			orientation: "0",
+			cells: [],
+		});
+
+		expect(BudpyConfigSchema.safeParse(config).success).toBe(true);
+		expect(config.screenIdleMinutes).toBe(120);
+		expect(config.screenSleepMode).toBe("dim");
+		expect(config.screenSleepDimBrightness).toBe(40);
+	});
 });
 
 describe("createBudpyConfigInputFromConfig", () => {
@@ -309,6 +339,10 @@ describe("createBudpyConfigInputFromConfig", () => {
 			backgroundColor: "#000000",
 			brightness: 255,
 			brightnessMode: "manual",
+			screenIdleMinutes: 0,
+			screenSleepMode: "off",
+			screenIdleUnit: "minutes",
+			screenSleepDimBrightness: 12,
 			orientation: "90",
 			cells: [
 				{
@@ -398,6 +432,10 @@ describe("createBudpyConfigInputFromConfig", () => {
 				backgroundColor: "#000000",
 				brightness: 255,
 				brightnessMode: "manual",
+				screenIdleMinutes: 0,
+				screenSleepMode: "off",
+				screenIdleUnit: "minutes",
+				screenSleepDimBrightness: 12,
 				orientation: "0",
 				cells: [
 					{
@@ -413,5 +451,23 @@ describe("createBudpyConfigInputFromConfig", () => {
 				],
 			},
 		);
+	});
+
+	it("derives the screen sleep unit from the imported idle minutes", () => {
+		const config = BudpyConfigSchema.parse({
+			version: 1,
+			device: { model: "esp32-2432s028r", orientation: "0" },
+			wifi: { ssid: "Home", password: "secret-password" },
+			locale: "fr-FR",
+			timezone: "Europe/Paris",
+			screenIdleMinutes: 120,
+			screenSleepMode: "dim",
+			layout: { cols: 3, rows: 4, cells: [] },
+		});
+
+		const input = createBudpyConfigInputFromConfig(config);
+		expect(input.screenIdleMinutes).toBe(120);
+		expect(input.screenSleepMode).toBe("dim");
+		expect(input.screenIdleUnit).toBe("hours");
 	});
 });
