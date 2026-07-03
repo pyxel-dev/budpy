@@ -3,9 +3,17 @@ import {
 	defaultBackgroundColor,
 	defaultBrightness,
 	defaultBrightnessMode,
+	defaultScreenIdleMinutes,
+	defaultScreenIdleUnit,
+	defaultScreenSleepMode,
+	defaultScreenSleepDimBrightness,
 	normalizeBrightnessMode,
 	normalizeBrightnessValue,
 	normalizeColorValue,
+	normalizeScreenIdleMinutes,
+	normalizeScreenIdleUnit,
+	normalizeScreenSleepDimBrightness,
+	normalizeScreenSleepMode,
 } from "./config";
 
 interface KeyValueStorage {
@@ -17,6 +25,10 @@ interface StoredDeviceSetupInput extends DeviceSetupInput {
 	version: 1;
 	brightness: number;
 	brightnessMode: DeviceSetupInput["brightnessMode"];
+	screenIdleMinutes: number;
+	screenIdleUnit: DeviceSetupInput["screenIdleUnit"];
+	screenSleepMode: DeviceSetupInput["screenSleepMode"];
+	screenSleepDimBrightness: number;
 }
 
 const deviceSetupStorageKey = "budpy:device-setup:v1";
@@ -27,6 +39,10 @@ export const emptyDeviceSetupInput = {
 	backgroundColor: defaultBackgroundColor,
 	brightness: defaultBrightness,
 	brightnessMode: defaultBrightnessMode,
+	screenIdleMinutes: defaultScreenIdleMinutes,
+	screenIdleUnit: defaultScreenIdleUnit,
+	screenSleepMode: defaultScreenSleepMode,
+	screenSleepDimBrightness: defaultScreenSleepDimBrightness,
 } satisfies DeviceSetupInput;
 
 function getLocalStorage(): KeyValueStorage | null {
@@ -68,12 +84,30 @@ export function parseStoredDeviceSetupInput(
 		const backgroundColor = normalizeColorValue(parsed.backgroundColor);
 		const brightness = normalizeBrightnessValue(parsed.brightness);
 		const brightnessMode = normalizeBrightnessMode(parsed.brightnessMode);
+		const screenIdleMinutes = normalizeScreenIdleMinutes(
+			parsed.screenIdleMinutes,
+		);
+		const screenIdleUnit = normalizeScreenIdleUnit(parsed.screenIdleUnit);
+		const screenSleepMode = normalizeScreenSleepMode(parsed.screenSleepMode);
+		const screenSleepDimBrightness = normalizeScreenSleepDimBrightness(
+			parsed.screenSleepDimBrightness,
+		);
 
 		if (ssid === null || password === null) {
 			return emptyDeviceSetupInput;
 		}
 
-		return { ssid, password, backgroundColor, brightness, brightnessMode };
+		return {
+			ssid,
+			password,
+			backgroundColor,
+			brightness,
+			brightnessMode,
+			screenIdleMinutes,
+			screenIdleUnit,
+			screenSleepMode,
+			screenSleepDimBrightness,
+		};
 	} catch (_error) {
 		return emptyDeviceSetupInput;
 	}
@@ -108,6 +142,12 @@ export function saveStoredDeviceSetupInput(
 		backgroundColor: normalizeColorValue(input.backgroundColor),
 		brightness: normalizeBrightnessValue(input.brightness),
 		brightnessMode: normalizeBrightnessMode(input.brightnessMode),
+		screenIdleMinutes: normalizeScreenIdleMinutes(input.screenIdleMinutes),
+		screenIdleUnit: normalizeScreenIdleUnit(input.screenIdleUnit),
+		screenSleepMode: normalizeScreenSleepMode(input.screenSleepMode),
+		screenSleepDimBrightness: normalizeScreenSleepDimBrightness(
+			input.screenSleepDimBrightness,
+		),
 	} satisfies StoredDeviceSetupInput;
 
 	try {

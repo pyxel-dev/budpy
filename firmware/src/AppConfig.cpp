@@ -411,6 +411,38 @@ bool parseAppConfig(const JsonDocument& doc, AppConfig& out, String& error) {
     return fail(error, "Unsupported brightnessMode");
   }
 
+  {
+    int16_t idleMinutes = 0;
+    if (!readOptionalIntInRange(root, "screenIdleMinutes", 0, 0, 1440,
+                                idleMinutes, error, "screenIdleMinutes")) {
+      return false;
+    }
+    parsed.screenIdleMinutes = static_cast<uint16_t>(idleMinutes);
+  }
+
+  String screenSleepMode = "off";
+  if (!readOptionalString(root, "screenSleepMode", "off", screenSleepMode,
+                          error, "screenSleepMode")) {
+    return false;
+  }
+  if (screenSleepMode == "off") {
+    parsed.screenSleepDim = false;
+  } else if (screenSleepMode == "dim") {
+    parsed.screenSleepDim = true;
+  } else {
+    return fail(error, "Unsupported screenSleepMode");
+  }
+
+  {
+    int16_t dimBrightness = 12;
+    if (!readOptionalIntInRange(root, "screenSleepDimBrightness", 12, 0, 255,
+                                dimBrightness, error,
+                                "screenSleepDimBrightness")) {
+      return false;
+    }
+    parsed.screenSleepDimBrightness = static_cast<uint8_t>(dimBrightness);
+  }
+
   JsonObjectConst device;
   if (!readObject(root, "device", device, error, "device")) {
     return false;

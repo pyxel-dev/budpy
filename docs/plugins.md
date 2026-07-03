@@ -114,7 +114,7 @@ firmware receives as JSON:
 
 - `key`: config key, also the JSON key the firmware reads.
 - `label`: input label in the web app.
-- `type`: one of `text`, `number`, `boolean`, `select`, `color`.
+- `type`: one of `text`, `number`, `boolean`, `select`, `color`, `image`.
 - `defaultValue` (optional): string, number, or boolean applied when the
   widget is added to the layout.
 - `options` (for `select`): array of `{ "label": ..., "value": ... }` string
@@ -131,6 +131,13 @@ firmware side typically parses them with `doc["key"].as<const char*>()`.
 `text` and `color` fields can also reference global variables (`$var:KEY`)
 managed in the web app's Variables dialog. References are resolved by the web
 app before the config is sent, so the firmware always receives literal values.
+
+`image` fields render a file picker in the web app. The selected picture is
+resized to the cell's pixel size, re-encoded as JPEG, and stored as a raw
+base64 string (no `data:` prefix) in the cell config under the field's `key`.
+The payload is capped at 48 KB of base64; the app lowers the JPEG quality to
+fit and rejects the file if it still exceeds the cap. The firmware is expected
+to base64-decode the value and render the JPEG (see `plugins/image`).
 
 ### Setting Groups
 

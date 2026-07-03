@@ -105,3 +105,7 @@ bool touchServiceRead(int16_t displayWidth, int16_t displayHeight, int16_t& x,
   y = static_cast<int16_t>(constrain(mappedY, 0, displayHeight - 1));
   return true;
 }
+
+bool touchServiceTouched() {
+  return digitalRead(TOUCH_IRQ_PIN) == LOW;
+}

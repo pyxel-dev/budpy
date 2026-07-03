@@ -6,6 +6,7 @@
 #include "GetDataPlugin.h"
 #include "HaCoverPlugin.h"
 #include "HaSensorPlugin.h"
+#include "ImagePlugin.h"
 #include "NextPlugin.h"
 #include "WeatherPlugin.h"
 
@@ -35,6 +36,12 @@ const PluginRegistration pluginRegistrations[] = {
         nullptr,
     },
     {
+        "image",
+        renderImagePlugin,
+        nullptr,
+        nullptr,
+    },
+    {
         "next",
         renderNextPlugin,
         nullptr,
@@ -48,4 +55,4 @@ const PluginRegistration pluginRegistrations[] = {
     },
 };
 
-const size_t pluginRegistrationCount = 6;
+const size_t pluginRegistrationCount = 7;

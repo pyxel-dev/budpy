@@ -90,6 +90,15 @@ void Renderer::fillRect(int16_t left, int16_t top, int16_t width,
   tft.fillRect(left, top, width, height, color);
 }
 
+void Renderer::pushImage(int16_t x, int16_t y, int16_t width, int16_t height,
+                         const uint16_t* pixels) {
+  if (width <= 0 || height <= 0 || pixels == nullptr) return;
+  const bool previousSwap = tft.getSwapBytes();
+  tft.setSwapBytes(true);
+  tft.pushImage(x, y, width, height, pixels);
+  tft.setSwapBytes(previousSwap);
+}
+
 int16_t Renderer::textWidth(const String& value, uint8_t font) {
   return static_cast<int16_t>(tft.textWidth(value, font));
 }

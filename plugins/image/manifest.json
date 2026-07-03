@@ -1,0 +1,71 @@
+{
+	"id": "image",
+	"version": "0.1.0",
+	"displayName": "Image",
+	"description": "Displays an uploaded picture or a remote JPEG.",
+	"defaultSize": {
+		"colSpan": 2,
+		"rowSpan": 2
+	},
+	"capabilities": ["network"],
+	"firmware": {
+		"type": "platformio-library",
+		"path": ".",
+		"include": "ImagePlugin.h",
+		"renderFunction": "renderImagePlugin"
+	},
+	"configFields": [
+		{
+			"key": "source",
+			"label": "Source",
+			"type": "select",
+			"defaultValue": "upload",
+			"options": [
+				{ "label": "Upload", "value": "upload" },
+				{ "label": "URL", "value": "url" }
+			]
+		},
+		{
+			"key": "imageData",
+			"label": "Image",
+			"type": "image",
+			"description": "Resized to the cell and embedded in the config.",
+			"disabledWhen": { "field": "source", "equals": "url" }
+		},
+		{
+			"key": "url",
+			"label": "Image URL (JPEG)",
+			"type": "text",
+			"maxLength": 512,
+			"placeholder": "https://example.com/image.jpg",
+			"disabledWhen": { "field": "source", "equals": "upload" }
+		},
+		{
+			"key": "fit",
+			"label": "Fit",
+			"type": "select",
+			"defaultValue": "contain",
+			"options": [
+				{ "label": "Contain", "value": "contain" },
+				{ "label": "Cover", "value": "cover" }
+			]
+		},
+		{
+			"key": "backgroundColor",
+			"label": "Background color",
+			"type": "color",
+			"defaultValue": "#000000"
+		},
+		{
+			"key": "refreshMinutes",
+			"label": "Refresh (minutes)",
+			"type": "number",
+			"defaultValue": 0,
+			"min": 0,
+			"max": 1440,
+			"step": 1,
+			"description": "URL mode only. 0 fetches once.",
+			"disabledWhen": { "field": "source", "equals": "upload" }
+		}
+	]
+}

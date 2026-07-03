@@ -123,6 +123,9 @@ export const BudpyConfigSchema = z.object({
 	backgroundColor: HexColorSchema.default("#000000"),
 	brightness: z.number().int().min(0).max(255).default(255),
 	brightnessMode: BrightnessModeSchema.default("manual"),
+	screenIdleMinutes: z.number().int().min(0).max(1440).default(0),
+	screenSleepMode: z.enum(["off", "dim"]).default("off"),
+	screenSleepDimBrightness: z.number().int().min(0).max(255).default(12),
 	device: z.object({
 		model: z.literal("esp32-2432s028r"),
 		orientation: OrientationSchema,

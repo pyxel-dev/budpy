@@ -41,6 +41,10 @@ describe("device setup storage", () => {
 			backgroundColor: "#000000",
 			brightness: 255,
 			brightnessMode: "manual",
+			screenIdleMinutes: 0,
+			screenIdleUnit: "minutes",
+			screenSleepMode: "off",
+			screenSleepDimBrightness: 12,
 		});
 	});
 
@@ -55,6 +59,10 @@ describe("device setup storage", () => {
 			backgroundColor: "#aabbcc",
 			brightness: 255,
 			brightnessMode: "manual",
+			screenIdleMinutes: 0,
+			screenIdleUnit: "minutes",
+			screenSleepMode: "off",
+			screenSleepDimBrightness: 12,
 		});
 	});
 
@@ -69,6 +77,10 @@ describe("device setup storage", () => {
 			backgroundColor: "#000000",
 			brightness: 128,
 			brightnessMode: "auto",
+			screenIdleMinutes: 0,
+			screenIdleUnit: "minutes",
+			screenSleepMode: "off",
+			screenSleepDimBrightness: 12,
 		});
 	});
 
@@ -86,6 +98,37 @@ describe("device setup storage", () => {
 			backgroundColor: "#000000",
 			brightness: 255,
 			brightnessMode: "manual",
+			screenIdleMinutes: 0,
+			screenIdleUnit: "minutes",
+			screenSleepMode: "off",
+			screenSleepDimBrightness: 12,
+		});
+	});
+
+	it("saves and reads screen sleep settings", () => {
+		const storage = new MemoryStorage();
+
+		saveStoredDeviceSetupInput(
+			{
+				ssid: "Home",
+				password: "secret-password",
+				screenIdleMinutes: 90,
+				screenIdleUnit: "minutes",
+				screenSleepMode: "dim",
+			},
+			storage,
+		);
+
+		expect(readStoredDeviceSetupInput(storage)).toEqual({
+			ssid: "Home",
+			password: "secret-password",
+			backgroundColor: "#000000",
+			brightness: 255,
+			brightnessMode: "manual",
+			screenIdleMinutes: 90,
+			screenIdleUnit: "minutes",
+			screenSleepMode: "dim",
+			screenSleepDimBrightness: 12,
 		});
 	});
 });

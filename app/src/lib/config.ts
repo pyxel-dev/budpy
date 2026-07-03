@@ -8,6 +8,8 @@ import type { LayoutCell } from "../models/LayoutCell";
 export type SupportedLocale = BudpyConfig["locale"];
 export type Orientation = BudpyConfig["device"]["orientation"];
 export type BrightnessMode = BudpyConfig["brightnessMode"];
+export type ScreenSleepMode = BudpyConfig["screenSleepMode"];
+export type ScreenIdleUnit = "minutes" | "hours";
 
 export const orientations = [
 	"0",
@@ -55,11 +57,28 @@ export const maxLayoutPages = 8;
 export const defaultBackgroundColor = "#000000";
 export const defaultBrightness = 255;
 export const defaultBrightnessMode = "manual" satisfies BrightnessMode;
+export const defaultScreenIdleMinutes = 0;
+export const defaultScreenSleepMode = "off" satisfies ScreenSleepMode;
+export const defaultScreenSleepDimBrightness = 12;
+export const defaultScreenIdleUnit = "minutes" satisfies ScreenIdleUnit;
 
 export const brightnessModes = [
 	"manual",
 	"auto",
 ] as const satisfies readonly BrightnessMode[];
+
+export const screenSleepModes = [
+	"off",
+	"dim",
+] as const satisfies readonly ScreenSleepMode[];
+
+export const screenIdleUnits = [
+	"minutes",
+	"hours",
+] as const satisfies readonly ScreenIdleUnit[];
+
+export const maxScreenIdleMinutes = 1440;
+export const maxScreenIdleHours = 24;
 
 const colorValuePattern = /^#[0-9a-f]{6}$/i;
 
@@ -88,6 +107,48 @@ export function normalizeBrightnessMode(value: unknown): BrightnessMode {
 	return brightnessModes.includes(value as BrightnessMode)
 		? (value as BrightnessMode)
 		: defaultBrightnessMode;
+}
+
+export function normalizeScreenIdleMinutes(
+	value: unknown,
+	fallback = defaultScreenIdleMinutes,
+): number {
+	return typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= 0 &&
+		value <= maxScreenIdleMinutes
+		? value
+		: fallback;
+}
+
+export function normalizeScreenSleepMode(value: unknown): ScreenSleepMode {
+	return screenSleepModes.includes(value as ScreenSleepMode)
+		? (value as ScreenSleepMode)
+		: defaultScreenSleepMode;
+}
+
+export function normalizeScreenSleepDimBrightness(
+	value: unknown,
+	fallback = defaultScreenSleepDimBrightness,
+): number {
+	return typeof value === "number" &&
+		Number.isInteger(value) &&
+		value >= 0 &&
+		value <= 255
+		? value
+		: fallback;
+}
+
+export function normalizeScreenIdleUnit(value: unknown): ScreenIdleUnit {
+	return screenIdleUnits.includes(value as ScreenIdleUnit)
+		? (value as ScreenIdleUnit)
+		: defaultScreenIdleUnit;
+}
+
+export function deriveScreenIdleUnit(
+	minutes: number,
+): ScreenIdleUnit {
+	return minutes > 0 && minutes % 60 === 0 ? "hours" : "minutes";
 }
 
 export function listPluginManifests(): readonly PluginManifest[] {
@@ -367,6 +428,11 @@ export function buildBudpyConfig(input: BudpyConfigInput): BudpyConfig {
 		backgroundColor,
 		brightness: normalizeBrightnessValue(input.brightness),
 		brightnessMode: normalizeBrightnessMode(input.brightnessMode),
+		screenIdleMinutes: normalizeScreenIdleMinutes(input.screenIdleMinutes),
+		screenSleepMode: normalizeScreenSleepMode(input.screenSleepMode),
+		screenSleepDimBrightness: normalizeScreenSleepDimBrightness(
+			input.screenSleepDimBrightness,
+		),
 		device: {
 			model: "esp32-2432s028r",
 			orientation: input.orientation,
@@ -418,6 +484,12 @@ export function createBudpyConfigInputFromConfig(
 		backgroundColor: normalizeColorValue(config.backgroundColor),
 		brightness: normalizeBrightnessValue(config.brightness),
 		brightnessMode: normalizeBrightnessMode(config.brightnessMode),
+		screenIdleMinutes: normalizeScreenIdleMinutes(config.screenIdleMinutes),
+		screenSleepMode: normalizeScreenSleepMode(config.screenSleepMode),
+		screenSleepDimBrightness: normalizeScreenSleepDimBrightness(
+			config.screenSleepDimBrightness,
+		),
+		screenIdleUnit: deriveScreenIdleUnit(config.screenIdleMinutes),
 		cells: fitCellsToOrientation(cells, orientation),
 	};
 }

@@ -36,6 +36,7 @@ const pluginConfigFieldTypes = new Set([
 	"boolean",
 	"select",
 	"color",
+	"image",
 ]);
 const identifierPattern = /^[A-Za-z_][A-Za-z0-9_]*$/;
 
@@ -178,7 +179,7 @@ function validatePluginManifest(manifest, manifestFile) {
 		if (!pluginConfigFieldTypes.has(field.type)) {
 			throw validationError(
 				manifestFile,
-				`${fieldPath}.type must be one of text, number, boolean, select, color`,
+				`${fieldPath}.type must be one of text, number, boolean, select, color, image`,
 			);
 		}
 

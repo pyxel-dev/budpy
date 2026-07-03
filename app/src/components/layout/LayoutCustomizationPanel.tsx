@@ -1,12 +1,20 @@
 import type { PluginConfigField, PluginManifest } from "@budpy/plugin-sdk";
 import { ChevronDown, ClipboardPaste, Trash2, Variable } from "lucide-react";
+import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import type { Orientation } from "../../lib/config";
 import {
   type GlobalVar,
   makeVarRef,
   parseVarRef,
   readGlobalVars,
 } from "../../lib/globalVarsStorage";
+import {
+  encodeImageForCell,
+  getCellPixelSize,
+  type ImageFit,
+  maxTotalImageDataBase64Length,
+} from "../../lib/imageField";
 
 import type { LayoutCell } from "../../models/LayoutCell";
 import styles from "./LayoutCustomizationPanel.module.css";
@@ -17,6 +25,8 @@ interface LayoutCustomizationPanelProps {
   manifest?: PluginManifest;
   isSettingsOpen: boolean;
   selectedArea: CellPlacement | null;
+  orientation: Orientation;
+  totalImageDataLength: number;
   plugins: readonly PluginManifest[];
   cellCount: number;
   maxCells: number;
@@ -31,6 +41,8 @@ interface LayoutCustomizationPanelProps {
 interface PluginSettingsPanelProps {
   cell: LayoutCell;
   manifest: PluginManifest;
+  orientation: Orientation;
+  totalImageDataLength: number;
   onConfigChange: (key: string, value: unknown) => void;
   onDeleteCell: (instanceId: string) => void;
 }
@@ -68,15 +80,117 @@ function getColorInputValue(value: unknown, fallback: unknown): string {
   return "#ffffff";
 }
 
+function ImageFieldInput({
+  field,
+  value,
+  cell,
+  orientation,
+  totalImageDataLength,
+  onConfigChange,
+}: {
+  field: PluginConfigField;
+  value: unknown;
+  cell: LayoutCell;
+  orientation: Orientation;
+  totalImageDataLength: number;
+  onConfigChange: (key: string, value: unknown) => void;
+}) {
+  const [error, setError] = useState<string | null>(null);
+  const [isEncoding, setIsEncoding] = useState(false);
+  const imageData = typeof value === "string" && value.length > 0 ? value : null;
+
+  async function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) {
+      return;
+    }
+
+    const fit: ImageFit = cell.config["fit"] === "cover" ? "cover" : "contain";
+    const backgroundColor =
+      typeof cell.config["backgroundColor"] === "string" &&
+      colorValuePattern.test(cell.config["backgroundColor"])
+        ? cell.config["backgroundColor"]
+        : "#000000";
+    const size = getCellPixelSize(cell, orientation);
+
+    setError(null);
+    setIsEncoding(true);
+    try {
+      const base64 = await encodeImageForCell(file, size, fit, backgroundColor);
+      const currentLength = typeof value === "string" ? value.length : 0;
+      const nextTotal = totalImageDataLength - currentLength + base64.length;
+      if (nextTotal > maxTotalImageDataBase64Length) {
+        setError("Total image budget exceeded (96 KB across all widgets)");
+        return;
+      }
+      onConfigChange(field.key, base64);
+    } catch (encodeError) {
+      setError(
+        encodeError instanceof Error
+          ? encodeError.message
+          : "Could not process this image",
+      );
+    } finally {
+      setIsEncoding(false);
+    }
+  }
+
+  return (
+    <div className={`form-field ${styles["field"]}`}>
+      <label htmlFor={`field-${field.key}`}>{field.label}</label>
+      {imageData && (
+        <img
+          alt="Widget preview"
+          className={styles["image-field-preview"]}
+          src={`data:image/jpeg;base64,${imageData}`}
+        />
+      )}
+      <div className={styles["field-control"]}>
+        <input
+          accept="image/*"
+          id={`field-${field.key}`}
+          name={field.key}
+          type="file"
+          disabled={isEncoding}
+          onChange={handleFileChange}
+        />
+        {imageData && (
+          <button
+            type="button"
+            className="icon-button icon-button-danger"
+            title="Remove image"
+            aria-label="Remove image"
+            onClick={() => {
+              setError(null);
+              onConfigChange(field.key, "");
+            }}
+          >
+            <Trash2 aria-hidden="true" size={12} />
+          </button>
+        )}
+      </div>
+      {error && <p className={styles["image-field-error"]}>{error}</p>}
+      {field.description && !error && <p>{field.description}</p>}
+    </div>
+  );
+}
+
 function PluginConfigFieldInput({
   field,
   value,
+  cell,
+  orientation,
+  totalImageDataLength,
   globalVars,
   colorVars,
   onConfigChange,
 }: {
   field: PluginConfigField;
   value: unknown;
+  cell: LayoutCell;
+  orientation: Orientation;
+  totalImageDataLength: number;
   globalVars: readonly GlobalVar[];
   colorVars: readonly GlobalVar[];
   onConfigChange: (key: string, value: unknown) => void;
@@ -98,6 +212,19 @@ function PluginConfigFieldInput({
         />
         <span>{field.label}</span>
       </label>
+    );
+  }
+
+  if (field.type === "image") {
+    return (
+      <ImageFieldInput
+        field={field}
+        value={value}
+        cell={cell}
+        orientation={orientation}
+        totalImageDataLength={totalImageDataLength}
+        onConfigChange={onConfigChange}
+      />
     );
   }
 
@@ -283,12 +410,16 @@ function PluginConfigFieldInput({
 function PluginConfigFields({
   fields,
   cell,
+  orientation,
+  totalImageDataLength,
   globalVars,
   colorVars,
   onConfigChange,
 }: {
   fields: readonly PluginConfigField[];
   cell: LayoutCell;
+  orientation: Orientation;
+  totalImageDataLength: number;
   globalVars: readonly GlobalVar[];
   colorVars: readonly GlobalVar[];
   onConfigChange: (key: string, value: unknown) => void;
@@ -305,6 +436,9 @@ function PluginConfigFields({
         <PluginConfigFieldInput
           field={field}
           value={cell.config[field.key]}
+          cell={cell}
+          orientation={orientation}
+          totalImageDataLength={totalImageDataLength}
           globalVars={globalVars}
           colorVars={colorVars}
           onConfigChange={onConfigChange}
@@ -385,6 +519,8 @@ function getDefaultOpenGroupKeys(
 function PluginSettingsPanel({
   cell,
   manifest,
+  orientation,
+  totalImageDataLength,
   onConfigChange,
   onDeleteCell,
 }: PluginSettingsPanelProps) {
@@ -493,6 +629,8 @@ function PluginSettingsPanel({
                 <PluginConfigFields
                   fields={group.fields}
                   cell={cell}
+                  orientation={orientation}
+                  totalImageDataLength={totalImageDataLength}
                   globalVars={globalVars}
                   colorVars={colorVars}
                   onConfigChange={onConfigChange}
@@ -572,6 +710,8 @@ export function LayoutCustomizationPanel({
   manifest,
   isSettingsOpen,
   selectedArea,
+  orientation,
+  totalImageDataLength,
   plugins,
   cellCount,
   maxCells,
@@ -607,6 +747,8 @@ export function LayoutCustomizationPanel({
         <PluginSettingsPanel
           cell={selectedCell}
           manifest={manifest}
+          orientation={orientation}
+          totalImageDataLength={totalImageDataLength}
           onConfigChange={onConfigChange}
           onDeleteCell={onDeleteCell}
         />

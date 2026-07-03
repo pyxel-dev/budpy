@@ -10,7 +10,7 @@ export const PluginCapabilitySchema = z.enum([
 export const PluginConfigFieldSchema = z.object({
 	key: z.string().min(1),
 	label: z.string().min(1),
-	type: z.enum(["text", "number", "boolean", "select", "color"]),
+	type: z.enum(["text", "number", "boolean", "select", "color", "image"]),
 	required: z.boolean().optional(),
 	placeholder: z.string().optional(),
 	description: z.string().optional(),

@@ -29,6 +29,8 @@ public:
   void fillRect(int16_t left, int16_t top, int16_t width, int16_t height);
   void fillRect(int16_t left, int16_t top, int16_t width, int16_t height,
                 uint16_t color);
+  void pushImage(int16_t x, int16_t y, int16_t width, int16_t height,
+                 const uint16_t* pixels);
   int16_t textWidth(const String& value, uint8_t font);
   void textAt(int16_t x, int16_t y, const String& value, uint8_t font,
               uint16_t color);
