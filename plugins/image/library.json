@@ -1,0 +1,16 @@
+{
+	"name": "BudpyImagePlugin",
+	"version": "0.1.0",
+	"description": "Budpy image plugin firmware library",
+	"frameworks": "arduino",
+	"platforms": "espressif32",
+	"dependencies": {
+		"bblanchon/ArduinoJson": "^7.4.3",
+		"bodmer/TFT_eSPI": "^2.5.43",
+		"bodmer/TJpg_Decoder": "^1.1.0"
+	},
+	"build": {
+		"srcDir": "firmware",
+		"includeDir": "firmware"
+	}
+}

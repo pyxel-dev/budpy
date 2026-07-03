@@ -14,6 +14,7 @@ import {
   type Orientation,
   orientations,
 } from "../lib/config";
+import { getTotalImageDataLength } from "../lib/imageField";
 import type { LayoutCell } from "../models/LayoutCell";
 import { GlobalVarsDialog } from "./GlobalVarsDialog";
 import styles from "./Layout.module.css";
@@ -100,6 +101,10 @@ export function Layout({
   const fittedCells = useMemo(
     () => fitCellsToOrientation(cells, orientation),
     [cells, orientation],
+  );
+  const totalImageDataLength = useMemo(
+    () => getTotalImageDataLength(fittedCells),
+    [fittedCells],
   );
   const currentPage = normalizeLayoutPage(activePage);
   const activePageCells = useMemo(
@@ -480,6 +485,8 @@ export function Layout({
             manifest={selectedManifest}
             isSettingsOpen={isSettingsOpen}
             selectedArea={selectedArea}
+            orientation={orientation}
+            totalImageDataLength={totalImageDataLength}
             plugins={plugins}
             cellCount={fittedCells.length}
             maxCells={maxLayoutCells}
