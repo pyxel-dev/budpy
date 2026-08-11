@@ -312,7 +312,13 @@ void loop() {
 
   if (!screenAsleep) {
     updateAutomaticBrightness();
+  }
 
+  // In "Dim" mode the screen stays visible (just dimmed), so rendering must
+  // keep running; only a full sleep (backlight off) suspends it.
+  const bool renderingSuspended = screenAsleep && !appConfig.screenSleepDim;
+
+  if (!renderingSuspended) {
     if (runtimeReady && renderer != nullptr &&
         (renderDirty || now - lastRenderMs >= RENDER_INTERVAL_MS)) {
       lastRenderMs = now;
@@ -320,7 +326,8 @@ void loop() {
       renderDirty = false;
     }
 
-    if (runtimeReady && renderer != nullptr && !wakeTouchActive) {
+    if (runtimeReady && renderer != nullptr && !wakeTouchActive &&
+        !screenAsleep) {
       pollPluginTouch(*renderer, appConfig, renderDirty);
     }
   }
