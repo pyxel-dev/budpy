@@ -88,6 +88,32 @@ bool normalizeCurrentPage(const AppConfig& config) {
   return true;
 }
 
+// Named timezones from the built-in table keep their DST rules. Other clock
+// timezones use the POSIX rule computed by the web app, then the fixed UTC
+// offset it captured when the config was sent (older web app versions).
+bool readCellTime(const AppConfig& config, const LayoutCellConfig& cell,
+                  struct tm& timeInfo) {
+  if (cell.pluginId != "clock") {
+    return getTimePartsForTimezone(config.timezone, timeInfo);
+  }
+
+  const ClockPluginConfig& clock = cell.clock;
+  if (isNativelySupportedTimezone(clock.timezone)) {
+    return getTimePartsForTimezone(clock.timezone, timeInfo);
+  }
+
+  if (clock.timezonePosix.length() > 0) {
+    return getTimePartsForPosixTimezone(clock.timezonePosix, timeInfo);
+  }
+
+  if (clock.hasTimezoneOffsetMinutes) {
+    return getTimePartsForUtcOffsetMinutes(clock.timezoneOffsetMinutes,
+                                           timeInfo);
+  }
+
+  return getTimePartsForTimezone(clock.timezone, timeInfo);
+}
+
 void showNextPageForConfig(const AppConfig& config) {
   const uint8_t pageCount = pageCountForConfig(config);
   currentPage = static_cast<uint8_t>((currentPage + 1) % pageCount);
@@ -144,21 +170,7 @@ void renderPlugins(Renderer& renderer, const AppConfig& config,
     }
 
     struct tm cellTimeInfo;
-    // Named timezones keep DST rules, so only fall back to the fixed UTC
-    // offset captured by the web app when the timezone is not known natively.
-    const bool useUtcOffset = cell.pluginId == "clock" &&
-                              cell.clock.hasTimezoneOffsetMinutes &&
-                              !isNativelySupportedTimezone(cell.clock.timezone);
-    const bool hasCellTime =
-        useUtcOffset
-            ? getTimePartsForUtcOffsetMinutes(cell.clock.timezoneOffsetMinutes,
-                                              cellTimeInfo)
-            : getTimePartsForTimezone(cell.pluginId == "clock"
-                                          ? cell.clock.timezone
-                                          : config.timezone,
-                                      cellTimeInfo);
-
-    if (!hasCellTime) {
+    if (!readCellTime(config, cell, cellTimeInfo)) {
       cellTimeInfo = timeInfo;
     }
 

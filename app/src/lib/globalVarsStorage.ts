@@ -100,6 +100,23 @@ export function resolveVarRef(
 }
 
 /**
+ * Lists the variable keys referenced in a cell config that have no stored
+ * value. Such references would otherwise reach the device as literal
+ * `$var:KEY` strings.
+ */
+export function findUnresolvedVarRefs(
+	config: Record<string, unknown>,
+	vars: GlobalVar[],
+): string[] {
+	return Object.values(config)
+		.map(parseVarRef)
+		.filter(
+			(key): key is string =>
+				key !== null && !vars.some((v) => v.key === key),
+		);
+}
+
+/**
  * Resolves all variable references in a cell config object.
  * Values that are not references are left unchanged.
  */

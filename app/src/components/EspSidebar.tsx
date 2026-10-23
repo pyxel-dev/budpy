@@ -33,6 +33,7 @@ import {
 } from "../lib/config";
 import { saveStoredDeviceSetupInput } from "../lib/deviceSetupStorage";
 import {
+  findUnresolvedVarRefs,
   readGlobalVars,
   resolveGlobalVarsInConfig,
 } from "../lib/globalVarsStorage";
@@ -154,6 +155,14 @@ export function EspSidebar({
 
     try {
       const globalVars = readGlobalVars();
+      const missingVars = new Set(
+        cells.flatMap((cell) => findUnresolvedVarRefs(cell.config, globalVars)),
+      );
+      if (missingVars.size > 0) {
+        throw new Error(
+          `Undefined variable(s): ${[...missingVars].join(", ")}. Define them in Variables or pick another value.`,
+        );
+      }
       const resolvedCells = cells.map((cell) => ({
         ...cell,
         config: resolveGlobalVarsInConfig(cell.config, globalVars),

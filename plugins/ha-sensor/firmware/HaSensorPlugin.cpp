@@ -84,6 +84,22 @@ uint8_t parseFont(const char* text, uint8_t fallback) {
   return fallback;
 }
 
+String ellipsizeToWidth(Renderer& renderer, const String& text, uint8_t font,
+                        int16_t maxWidth) {
+  if (maxWidth <= 0) return "";
+  if (renderer.textWidth(text, font) <= maxWidth) return text;
+
+  const String ellipsis = "...";
+  String truncated = text;
+  while (truncated.length() > 0) {
+    truncated.remove(truncated.length() - 1);
+    const String candidate = truncated + ellipsis;
+    if (renderer.textWidth(candidate, font) <= maxWidth) return candidate;
+  }
+
+  return renderer.textWidth(ellipsis, font) <= maxWidth ? ellipsis : String();
+}
+
 TextHorizontalAlign parseHAlign(const String& s) {
   if (s == "left") return TextHorizontalAlign::Left;
   if (s == "right") return TextHorizontalAlign::Right;
@@ -138,8 +154,18 @@ HaSensorConfig readConfig(const String& configJson) {
   cfg.title = doc["title"] | "";
   cfg.unit = doc["unit"] | "";
 
+  cfg.haUrl.trim();
+  cfg.haToken.trim();
+  cfg.entityId.trim();
   while (cfg.haUrl.endsWith("/")) {
     cfg.haUrl.remove(cfg.haUrl.length() - 1);
+  }
+  // Users often paste URLs ending with /api (same handling as ha-cover).
+  if (cfg.haUrl.endsWith("/api")) {
+    cfg.haUrl.remove(cfg.haUrl.length() - 4);
+    while (cfg.haUrl.endsWith("/")) {
+      cfg.haUrl.remove(cfg.haUrl.length() - 1);
+    }
   }
 
   if (doc["titleFont"].is<const char*>())
@@ -204,13 +230,34 @@ static HaCache haCache[MAX_HA_CACHE];
 static HaRenderCache haRenderCache[MAX_LAYOUT_CELLS];
 static uint8_t haCacheCount = 0;
 
-HaCache* findOrCreateCache(const String& entityId) {
+// The cache outlives reprovisioning: once it is full, recycle an entry that
+// no ha-sensor cell of the current config shows any more.
+HaCache* findUnusedCache(const AppConfig& config, const String& pluginId) {
+  for (uint8_t i = 0; i < haCacheCount; i++) {
+    bool inUse = false;
+    for (uint8_t c = 0; c < config.cellCount && !inUse; c++) {
+      const LayoutCellConfig& cell = config.cells[c];
+      inUse = cell.pluginId == pluginId &&
+              haCache[i].entityId == readConfig(cell.configJson).entityId;
+    }
+    if (!inUse) return &haCache[i];
+  }
+  return nullptr;
+}
+
+HaCache* findOrCreateCache(const String& entityId,
+                           const PluginRenderContext& context) {
   for (uint8_t i = 0; i < haCacheCount; i++) {
     if (haCache[i].entityId == entityId) return &haCache[i];
   }
-  if (haCacheCount >= MAX_HA_CACHE) return nullptr;
 
-  HaCache& entry = haCache[haCacheCount++];
+  HaCache* recycled =
+      haCacheCount < MAX_HA_CACHE
+          ? &haCache[haCacheCount++]
+          : findUnusedCache(context.config, context.cell.pluginId);
+  if (recycled == nullptr) return nullptr;
+
+  HaCache& entry = *recycled;
   entry.entityId = entityId;
   entry.value = "";
   entry.errorCode = "";
@@ -347,7 +394,7 @@ void renderHaSensorPlugin(PluginRenderContext& context) {
   // -----------------------------------------------------------------------
   // Cache refresh
   // -----------------------------------------------------------------------
-  HaCache* cache = findOrCreateCache(cfg.entityId);
+  HaCache* cache = findOrCreateCache(cfg.entityId, context);
   const uint32_t now = millis();
 
   if (cache != nullptr && cfg.entityId.length() > 0 && cfg.haUrl.length() > 0 &&
@@ -425,11 +472,15 @@ void renderHaSensorPlugin(PluginRenderContext& context) {
                         parseHAlign(cfg.titleHorizontalAlign), cfg.offsetX);
   }
 
-  // Value + unit side by side
+  // Value + unit side by side. Long states (e.g. "unavailable" in font 4)
+  // are shortened so they never spill over neighbouring cells.
   const String unitStr = showUnit ? toAscii(cfg.unit) : String("");
-  const int16_t valW = renderer.textWidth(valueText, cfg.valueFont);
   const int16_t unitW =
       showUnit ? renderer.textWidth(unitStr, cfg.unitFont) : 0;
+  const String clippedValue =
+      ellipsizeToWidth(renderer, valueText, cfg.valueFont,
+                       static_cast<int16_t>(cellWidth - unitW));
+  const int16_t valW = renderer.textWidth(clippedValue, cfg.valueFont);
   const int16_t pairW = valW + unitW;
   const int16_t valueY = startY + titleH;
   const int16_t unitY = valueY;
@@ -443,6 +494,8 @@ void renderHaSensorPlugin(PluginRenderContext& context) {
   } else {
     pairLeft = cellLeft + cfg.offsetX;
   }
+  if (pairLeft + pairW > cellRight) pairLeft = cellRight - pairW;
+  if (pairLeft < cellLeft) pairLeft = cellLeft;
 
   int16_t valX, unitX;
   if (showUnit && cfg.unitPosition == "before") {
@@ -453,7 +506,7 @@ void renderHaSensorPlugin(PluginRenderContext& context) {
     unitX = pairLeft + valW;
   }
 
-  renderer.textAt(valX, valueY, valueText, cfg.valueFont, cfg.valueColor);
+  renderer.textAt(valX, valueY, clippedValue, cfg.valueFont, cfg.valueColor);
   if (showUnit) {
     renderer.textAt(unitX, unitY, unitStr, cfg.unitFont, cfg.unitColor);
   }

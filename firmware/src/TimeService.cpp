@@ -8,6 +8,11 @@
 namespace {
 constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 20000;
 constexpr uint32_t NTP_SYNC_TIMEOUT_MS = 15000;
+constexpr uint32_t WIFI_RETRY_INTERVAL_MS = 30000;
+constexpr time_t MIN_VALID_EPOCH = 1609459200; // 2021-01-01
+
+static bool sntpConfigured = false;
+static uint32_t lastWifiRetryMs = 0;
 
 // Returns the POSIX TZ string for natively supported timezones, or nullptr.
 const char* findPosixTimezone(const String& timezone) {
@@ -48,10 +53,16 @@ const char* timezoneToPosix(const String& timezone) {
   return posixTimezone != nullptr ? posixTimezone : "UTC0";
 }
 
+void configureSntp(const AppConfig& config) {
+  configTzTime(timezoneToPosix(config.timezone), "pool.ntp.org",
+               "time.nist.gov");
+  sntpConfigured = true;
+}
+
 bool readTimePartsForPosixTimezone(const char* posixTimezone,
                                    struct tm& timeInfo) {
   const time_t now = time(nullptr);
-  if (now < 1609459200) {
+  if (now < MIN_VALID_EPOCH) {
     return false;
   }
 
@@ -76,6 +87,8 @@ bool readTimePartsForPosixTimezone(const char* posixTimezone,
 
 bool connectWifiAndSyncTime(const AppConfig& config, String& error) {
   error = "";
+  sntpConfigured = false;
+  lastWifiRetryMs = millis();
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -92,8 +105,7 @@ bool connectWifiAndSyncTime(const AppConfig& config, String& error) {
     return false;
   }
 
-  configTzTime(timezoneToPosix(config.timezone), "pool.ntp.org",
-               "time.nist.gov");
+  configureSntp(config);
 
   struct tm timeInfo;
   if (!getLocalTime(&timeInfo, NTP_SYNC_TIMEOUT_MS)) {
@@ -102,6 +114,25 @@ bool connectWifiAndSyncTime(const AppConfig& config, String& error) {
   }
 
   return true;
+}
+
+bool pollWifiAndTimeRecovery(const AppConfig& config) {
+  if (WiFi.status() != WL_CONNECTED) {
+    const uint32_t now = millis();
+    if (now - lastWifiRetryMs >= WIFI_RETRY_INTERVAL_MS) {
+      lastWifiRetryMs = now;
+      WiFi.reconnect();
+    }
+    return false;
+  }
+
+  // SNTP keeps polling in the background once configured, so the clock gets
+  // set even when the first synchronization timed out.
+  if (!sntpConfigured) {
+    configureSntp(config);
+  }
+
+  return time(nullptr) >= MIN_VALID_EPOCH;
 }
 
 bool getLocalTimeParts(struct tm& timeInfo) {
@@ -116,10 +147,15 @@ bool getTimePartsForTimezone(const String& timezone, struct tm& timeInfo) {
   return readTimePartsForPosixTimezone(timezoneToPosix(timezone), timeInfo);
 }
 
+bool getTimePartsForPosixTimezone(const String& posixTimezone,
+                                  struct tm& timeInfo) {
+  return readTimePartsForPosixTimezone(posixTimezone.c_str(), timeInfo);
+}
+
 bool getTimePartsForUtcOffsetMinutes(int16_t offsetMinutes,
                                      struct tm& timeInfo) {
   const time_t now = time(nullptr);
-  if (now < 1609459200) {
+  if (now < MIN_VALID_EPOCH) {
     return false;
   }
 

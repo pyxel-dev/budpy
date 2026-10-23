@@ -41,7 +41,7 @@ function getDeviceErrorMessage(error: unknown): string {
 	}
 
 	if (/^Unsupported [a-z][a-z0-9-]*\.timezone/.test(message)) {
-		return `${message}. Reflash the firmware from the Flash tab to use the new time zones.`;
+		return `${message}. Reflash the firmware from the Flash firmware section to use the new time zones.`;
 	}
 
 	return message;
@@ -123,33 +123,67 @@ async function exchangeSerialCommand(command: unknown): Promise<string> {
 
 		const reader = port.readable.getReader();
 		try {
-			const decoder = new TextDecoder();
-			let response = "";
-
-			while (true) {
-				const { value, done } = await reader.read();
-
-				if (done) {
-					break;
-				}
-
-				if (value) {
-					response += decoder.decode(value, { stream: true });
-					const newlineIndex = response.indexOf("\n");
-
-					if (newlineIndex >= 0) {
-						return response.slice(0, newlineIndex).trim();
-					}
-				}
-			}
+			return await readResponseLine(reader);
 		} finally {
 			reader.releaseLock();
 		}
-
-		throw new Error("Device did not acknowledge configuration.");
 	} finally {
 		await port.close().catch(() => undefined);
 	}
+}
+
+export const deviceResponseTimeoutMs = 30_000;
+
+/**
+ * Reads the first non-empty line sent by the device. Gives up after
+ * `timeoutMs` so an unresponsive board cannot leave the UI (and the port)
+ * stuck forever.
+ */
+export async function readResponseLine(
+	reader: ReadableStreamDefaultReader<Uint8Array>,
+	timeoutMs = deviceResponseTimeoutMs,
+): Promise<string> {
+	let timedOut = false;
+	const timeout = setTimeout(() => {
+		timedOut = true;
+		reader.cancel().catch(() => undefined);
+	}, timeoutMs);
+
+	try {
+		const decoder = new TextDecoder();
+		let response = "";
+
+		while (true) {
+			const { value, done } = await reader.read();
+
+			if (done) {
+				break;
+			}
+
+			if (value) {
+				response += decoder.decode(value, { stream: true });
+				let newlineIndex = response.indexOf("\n");
+
+				while (newlineIndex >= 0) {
+					const line = response.slice(0, newlineIndex).trim();
+					if (line.length > 0) {
+						return line;
+					}
+
+					response = response.slice(newlineIndex + 1);
+					newlineIndex = response.indexOf("\n");
+				}
+			}
+		}
+	} finally {
+		clearTimeout(timeout);
+	}
+
+	throw new Error(
+		timedOut
+			? "The ESP32 did not answer in time. Check the USB connection and that the Budpy firmware is flashed, then try again."
+			: "Device did not acknowledge configuration.",
+	);
 }
 
 export async function sendConfigOverSerial(

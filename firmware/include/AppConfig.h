@@ -6,6 +6,7 @@ struct ClockPluginConfig {
   String timezone = "Europe/Paris";
   bool hasTimezoneOffsetMinutes = false;
   int16_t timezoneOffsetMinutes = 0;
+  String timezonePosix = "";
   String locale = "fr-FR";
   String hourCycle = "h23";
   String dateTimeOrder = "time-date";
