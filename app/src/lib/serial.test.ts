@@ -3,7 +3,23 @@ import { describe, expect, it } from "vitest";
 import {
 	parseDeviceConfigResponse,
 	parseDeviceResponse,
+	readResponseLine,
 } from "./serial";
+
+function streamReader(chunks: string[], close = true) {
+	const encoder = new TextEncoder();
+
+	return new ReadableStream<Uint8Array>({
+		start(controller) {
+			for (const chunk of chunks) {
+				controller.enqueue(encoder.encode(chunk));
+			}
+			if (close) {
+				controller.close();
+			}
+		},
+	}).getReader();
+}
 
 describe("parseDeviceResponse", () => {
 	it("returns the success message from an ok response", () => {
@@ -34,7 +50,7 @@ describe("parseDeviceResponse", () => {
 				'{"ok":false,"error":"Unsupported display.timezone: America/New_York"}',
 			),
 		).toThrow(
-			"Unsupported display.timezone: America/New_York. Reflash the firmware from the Flash tab to use the new time zones.",
+			"Unsupported display.timezone: America/New_York. Reflash the firmware from the Flash firmware section to use the new time zones.",
 		);
 	});
 
@@ -95,5 +111,27 @@ describe("parseDeviceConfigResponse", () => {
 		expect(() =>
 			parseDeviceConfigResponse('{"ok":true,"config":{"version":1}}'),
 		).toThrow("Device returned an invalid configuration.");
+	});
+});
+
+describe("readResponseLine", () => {
+	it("returns the first non-empty line split across chunks", async () => {
+		await expect(
+			readResponseLine(
+				streamReader(["\r\n", '{"ok":tr', 'ue}\n{"ok":false}\n']),
+			),
+		).resolves.toBe('{"ok":true}');
+	});
+
+	it("rejects when the device closes the stream without a line", async () => {
+		await expect(readResponseLine(streamReader(["partial"]))).rejects.toThrow(
+			"Device did not acknowledge configuration.",
+		);
+	});
+
+	it("rejects when the device does not answer in time", async () => {
+		await expect(readResponseLine(streamReader([], false), 10)).rejects.toThrow(
+			"The ESP32 did not answer in time.",
+		);
 	});
 });

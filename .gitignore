@@ -8,3 +8,4 @@ firmware/include/version.generated.h
 
 app/public/firmware/*.bin
 app/public/firmware/manifest.json
+*.tsbuildinfo

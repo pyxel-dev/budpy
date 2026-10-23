@@ -238,7 +238,9 @@ static void loadConfigOrShowStatus() {
   if (hasConfig) {
     showStatus(tft, "Budpy", "WiFi connecting...", TFT_YELLOW);
     if (!connectWifiAndSyncTime(appConfig, error)) {
-      showStatus(tft, "Budpy", error, TFT_RED);
+      // loop() keeps retrying in the background (e.g. the router boots slower
+      // than the ESP32 after a power cut).
+      showStatus(tft, "Budpy", error + ". Retrying...", TFT_RED);
       return;
     }
 
@@ -279,6 +281,12 @@ void loop() {
   bool configChanged = false;
   if (pollSerialProvisioning(configChanged) && configChanged) {
     loadConfigOrShowStatus();
+  }
+
+  if (hasConfig && !runtimeReady && pollWifiAndTimeRecovery(appConfig)) {
+    runtimeReady = true;
+    lastRenderMs = 0;
+    renderDirty = true;
   }
 
   const uint32_t now = millis();

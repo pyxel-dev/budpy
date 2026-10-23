@@ -84,7 +84,7 @@ Full field reference and step-by-step for adding a plugin: `docs/plugins.md`.
 - `app/src/lib/layoutStorage.ts`, `deviceSetupStorage.ts`, `globalVarsStorage.ts` — browser-persisted state (layout drafts, device setup, `$var:KEY` global variables referenced by `text`/`color` config fields).
 - `app/src/lib/serial.ts` — reads device config over USB serial (uses `esp-web-tools` for flashing).
 - `app/src/models/` — `LayoutCell`, `LayoutDraft`, `BudpyConfigInput`, `DeviceSetupInput` types.
-- `app/src/components/layout/` — drag/drop layout editor (`layoutCells.ts`, `layoutDrag.ts`) and the plugin palette/customization panels.
+- `app/src/components/layout/` — drag/drop layout editor (`layoutCells.ts`, `layoutDrag.ts`), the preview grid and the customization panel (plugin picker + settings form).
 - Config field type `image`: file picker resizes to cell pixel size, re-encodes JPEG, stores base64 (no `data:` prefix, 48 KB cap) in cell config; firmware base64-decodes and renders (see `plugins/image`).
 
 ## Firmware structure

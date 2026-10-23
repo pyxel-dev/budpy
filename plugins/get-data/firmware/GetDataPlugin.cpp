@@ -290,13 +290,33 @@ static GetDataCache dataCache[MAX_GET_DATA_CACHE];
 static GetDataRenderCache renderCacheArr[MAX_LAYOUT_CELLS];
 static uint8_t dataCacheCount = 0;
 
-GetDataCache* findOrCreateCache(const String& cacheKey) {
+// The cache outlives reprovisioning: once it is full, recycle an entry that
+// no get-data cell of the current config requests any more.
+GetDataCache* findUnusedCache(const PluginRenderContext& context) {
+  for (uint8_t i = 0; i < dataCacheCount; i++) {
+    bool inUse = false;
+    for (uint8_t c = 0; c < context.config.cellCount && !inUse; c++) {
+      const LayoutCellConfig& cell = context.config.cells[c];
+      inUse = cell.pluginId == context.cell.pluginId &&
+              dataCache[i].cacheKey == buildUrl(readConfig(cell.configJson));
+    }
+    if (!inUse) return &dataCache[i];
+  }
+  return nullptr;
+}
+
+GetDataCache* findOrCreateCache(const String& cacheKey,
+                                const PluginRenderContext& context) {
   for (uint8_t i = 0; i < dataCacheCount; i++) {
     if (dataCache[i].cacheKey == cacheKey) return &dataCache[i];
   }
-  if (dataCacheCount >= MAX_GET_DATA_CACHE) return nullptr;
 
-  GetDataCache& entry = dataCache[dataCacheCount++];
+  GetDataCache* recycled = dataCacheCount < MAX_GET_DATA_CACHE
+                               ? &dataCache[dataCacheCount++]
+                               : findUnusedCache(context);
+  if (recycled == nullptr) return nullptr;
+
+  GetDataCache& entry = *recycled;
   entry.cacheKey = cacheKey;
   entry.payload = "";
   entry.errorCode = "";
@@ -370,6 +390,15 @@ bool fetchData(const String& url, String& outPayload, String& outError) {
 // e.g. "data.key" on {"data":{"key":"value"}} → "value"
 // ---------------------------------------------------------------------------
 
+// Up to 4 decimals without trailing zeros: 21.5 -> "21.5", not "21.5000".
+String formatDecimal(double value) {
+  String text(value, 4);
+  if (text.indexOf('.') < 0) return text;
+  while (text.endsWith("0")) text.remove(text.length() - 1);
+  if (text.endsWith(".")) text.remove(text.length() - 1);
+  return text;
+}
+
 String resolveJsonPath(JsonVariantConst root, const String& path) {
   if (path.length() == 0) return "";
 
@@ -402,8 +431,7 @@ String resolveJsonPath(JsonVariantConst root, const String& path) {
   if (current.is<const char*>()) return String(current.as<const char*>());
   if (current.is<long>()) return String(current.as<long>());
   if (current.is<int>()) return String(current.as<int>());
-  if (current.is<double>()) return String(current.as<double>(), 4);
-  if (current.is<float>()) return String(current.as<float>(), 4);
+  if (current.is<double>()) return formatDecimal(current.as<double>());
   if (current.is<bool>()) return current.as<bool>() ? "true" : "false";
   return "";
 }
@@ -478,7 +506,7 @@ void renderGetDataPlugin(PluginRenderContext& context) {
     displayKey = "SETUP";
   } else {
     const String builtUrl = buildUrl(cfg);
-    GetDataCache* cache = findOrCreateCache(builtUrl);
+    GetDataCache* cache = findOrCreateCache(builtUrl, context);
 
     if (cache == nullptr) {
       displayKey = "ERR cache";

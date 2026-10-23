@@ -14,6 +14,20 @@ String readLine() {
   return Serial.readStringUntil('\n');
 }
 
+// Parses the next command line into doc. The raw line is released on return,
+// so only the parsed copy stays alive while the command runs (configs with
+// images are tens of KB).
+bool readCommand(JsonDocument& doc, DeserializationError& parseError) {
+  String line = readLine();
+  line.trim();
+  if (line.isEmpty()) {
+    return false;
+  }
+
+  parseError = deserializeJson(doc, line);
+  return true;
+}
+
 void writeErrorResponse(const String& error) {
   JsonDocument response;
   response["ok"] = false;
@@ -30,20 +44,17 @@ void writeSuccessResponse() {
   Serial.println();
 }
 
-void writeConfigResponse(const String& configJson) {
-  JsonDocument configDoc;
-  DeserializationError parseError = deserializeJson(configDoc, configJson);
-  if (parseError) {
-    writeErrorResponse(parseError.c_str());
+void writeConfigResponse() {
+  String error;
+  if (!checkStoredAppConfig(error)) {
+    writeErrorResponse(error);
     return;
   }
 
-  JsonDocument response;
-  response["ok"] = true;
-  response["message"] = "Config loaded";
-  response["config"].set(configDoc.as<JsonVariantConst>());
-  serializeJson(response, Serial);
-  Serial.println();
+  // Stream the stored file into the response instead of rebuilding it in RAM.
+  Serial.print("{\"ok\":true,\"message\":\"Config loaded\",\"config\":");
+  writeStoredAppConfigJson(Serial, error);
+  Serial.println("}");
 }
 
 } // namespace
@@ -51,14 +62,12 @@ void writeConfigResponse(const String& configJson) {
 bool pollSerialProvisioning(bool& configChanged) {
   configChanged = false;
 
-  String line = readLine();
-  line.trim();
-  if (line.isEmpty()) {
+  JsonDocument doc;
+  DeserializationError parseError = DeserializationError::Ok;
+  if (!readCommand(doc, parseError)) {
     return false;
   }
 
-  JsonDocument doc;
-  DeserializationError parseError = deserializeJson(doc, line);
   if (parseError) {
     writeErrorResponse(parseError.c_str());
     return true;
@@ -66,14 +75,7 @@ bool pollSerialProvisioning(bool& configChanged) {
 
   const char* type = doc["type"] | "";
   if (std::strcmp(type, "config:get") == 0) {
-    String configJson;
-    String error;
-    if (!loadAppConfigJson(configJson, error)) {
-      writeErrorResponse(error);
-      return true;
-    }
-
-    writeConfigResponse(configJson);
+    writeConfigResponse();
     return true;
   }
 
@@ -82,11 +84,8 @@ bool pollSerialProvisioning(bool& configChanged) {
     return true;
   }
 
-  String configJson;
-  serializeJson(doc["config"], configJson);
-
   String error;
-  if (!saveAppConfigJson(configJson, error)) {
+  if (!saveAppConfig(doc["config"].as<JsonVariantConst>(), error)) {
     writeErrorResponse(error);
     return true;
   }

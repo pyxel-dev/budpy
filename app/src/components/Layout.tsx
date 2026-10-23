@@ -524,6 +524,7 @@ export function Layout({
         ref={aboutDialogRef}
         className={`modal-dialog ${styles["about-dialog"]}`}
         aria-labelledby="about-dialog-title"
+        onClose={() => setIsAboutOpen(false)}
         onClick={(e) => {
           if (e.target === aboutDialogRef.current) setIsAboutOpen(false);
         }}

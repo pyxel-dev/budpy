@@ -18,10 +18,9 @@ export const orientations = [
 	"270",
 ] as const satisfies readonly Orientation[];
 
-export function getTimezoneOffsetMinutes(
-	timezone: string,
-	date = new Date(),
-): number {
+type UtcOffsetReader = (date: Date) => number;
+
+function createUtcOffsetReader(timezone: string): UtcOffsetReader | null {
 	try {
 		const formatter = new Intl.DateTimeFormat("en-US", {
 			timeZone: timezone,
@@ -33,23 +32,229 @@ export function getTimezoneOffsetMinutes(
 			second: "2-digit",
 			hourCycle: "h23",
 		});
-		const parts = formatter.formatToParts(date);
-		const values = Object.fromEntries(
-			parts.map((part) => [part.type, part.value]),
-		);
-		const zonedTime = Date.UTC(
-			Number(values.year),
-			Number(values.month) - 1,
-			Number(values.day),
-			Number(values.hour),
-			Number(values.minute),
-			Number(values.second),
-		);
 
-		return Math.round((zonedTime - date.getTime()) / 60000) || 0;
+		return (date) => {
+			const parts = formatter.formatToParts(date);
+			const values = Object.fromEntries(
+				parts.map((part) => [part.type, part.value]),
+			);
+			const zonedTime = Date.UTC(
+				Number(values.year),
+				Number(values.month) - 1,
+				Number(values.day),
+				Number(values.hour),
+				Number(values.minute),
+				Number(values.second),
+			);
+
+			return Math.round((zonedTime - date.getTime()) / 60000) || 0;
+		};
 	} catch (_error) {
-		return 0;
+		return null;
 	}
+}
+
+export function getTimezoneOffsetMinutes(
+	timezone: string,
+	date = new Date(),
+): number {
+	return createUtcOffsetReader(timezone)?.(date) ?? 0;
+}
+
+const minuteMs = 60_000;
+const dayMs = 24 * 60 * minuteMs;
+const posixRuleCheckYears = 8;
+
+interface OffsetTransition {
+	at: number;
+	before: number;
+	after: number;
+}
+
+interface PosixTransitionRule {
+	month: number;
+	week: number;
+	weekday: number;
+	minutes: number;
+}
+
+function findOffsetTransitions(
+	readOffset: UtcOffsetReader,
+	year: number,
+): OffsetTransition[] {
+	const transitions: OffsetTransition[] = [];
+	const end = Date.UTC(year + 1, 0, 1);
+	let previousTime = Date.UTC(year, 0, 1);
+	let previousOffset = readOffset(new Date(previousTime));
+
+	for (let time = previousTime + dayMs; time <= end; time += dayMs) {
+		const offset = readOffset(new Date(time));
+
+		if (offset !== previousOffset) {
+			// Narrow the change down to the minute it happens.
+			let low = previousTime;
+			let high = time;
+			while (high - low > minuteMs) {
+				const middle =
+					low + Math.floor((high - low) / 2 / minuteMs) * minuteMs;
+				if (readOffset(new Date(middle)) === previousOffset) {
+					low = middle;
+				} else {
+					high = middle;
+				}
+			}
+
+			transitions.push({ at: high, before: previousOffset, after: offset });
+		}
+
+		previousTime = time;
+		previousOffset = offset;
+	}
+
+	return transitions;
+}
+
+function getDaysInMonth(year: number, month: number): number {
+	return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function getRuleInstant(
+	rule: PosixTransitionRule,
+	year: number,
+	offsetBefore: number,
+): number {
+	const firstWeekday = new Date(Date.UTC(year, rule.month - 1, 1)).getUTCDay();
+	const daysInMonth = getDaysInMonth(year, rule.month);
+	let day = 1 + ((rule.weekday - firstWeekday + 7) % 7) + (rule.week - 1) * 7;
+	while (day > daysInMonth) {
+		day -= 7;
+	}
+
+	return (
+		Date.UTC(year, rule.month - 1, day) +
+		(rule.minutes - offsetBefore) * minuteMs
+	);
+}
+
+// POSIX rules are expressed in the wall-clock time in effect before the
+// change. A day in the last week of the month may mean "last" or "nth", so
+// keep the candidate that predicts the next years' transitions.
+function findTransitionRule(
+	readOffset: UtcOffsetReader,
+	transition: OffsetTransition,
+	year: number,
+): PosixTransitionRule | null {
+	const local = new Date(transition.at + transition.before * minuteMs);
+	const month = local.getUTCMonth() + 1;
+	const day = local.getUTCDate();
+	const weeks = [Math.ceil(day / 7)];
+	if (day + 7 > getDaysInMonth(local.getUTCFullYear(), month)) {
+		weeks.unshift(5);
+	}
+
+	for (const week of weeks) {
+		const rule = {
+			month,
+			week,
+			weekday: local.getUTCDay(),
+			minutes: local.getUTCHours() * 60 + local.getUTCMinutes(),
+		};
+		const matchesNextYears = Array.from(
+			{ length: posixRuleCheckYears },
+			(_, index) => year + index + 1,
+		).every((checkYear) => {
+			const at = getRuleInstant(rule, checkYear, transition.before);
+
+			return (
+				readOffset(new Date(at - minuteMs)) === transition.before &&
+				readOffset(new Date(at)) === transition.after
+			);
+		});
+
+		if (matchesNextYears) {
+			return rule;
+		}
+	}
+
+	return null;
+}
+
+function formatPosixClock(totalMinutes: number): string {
+	const hours = Math.floor(totalMinutes / 60);
+	const minutes = totalMinutes % 60;
+
+	return minutes > 0
+		? `${hours}:${String(minutes).padStart(2, "0")}`
+		: String(hours);
+}
+
+function formatPosixOffset(offsetMinutes: number): string {
+	// POSIX counts offsets westward: UTC+2 is written "-2".
+	return `${offsetMinutes > 0 ? "-" : ""}${formatPosixClock(Math.abs(offsetMinutes))}`;
+}
+
+function formatPosixRule(rule: PosixTransitionRule): string {
+	return `M${rule.month}.${rule.week}.${rule.weekday}/${formatPosixClock(rule.minutes)}`;
+}
+
+/**
+ * Builds a POSIX TZ string (e.g. `STD-1DST-2,M3.5.0/2,M10.5.0/3`) so the
+ * firmware can follow DST for zones missing from its built-in table. Returns
+ * `null` when the zone's rules cannot be expressed that way.
+ */
+export function getPosixTimezone(
+	timezone: string,
+	date = new Date(),
+): string | null {
+	const readOffset = createUtcOffsetReader(timezone);
+	if (!readOffset) {
+		return null;
+	}
+
+	const year = date.getUTCFullYear();
+	const transitions = findOffsetTransitions(readOffset, year);
+	if (transitions.length === 0) {
+		return `STD${formatPosixOffset(readOffset(date))}`;
+	}
+
+	const start = transitions.find((item) => item.after > item.before);
+	const end = transitions.find((item) => item.after < item.before);
+	if (
+		transitions.length !== 2 ||
+		!start ||
+		!end ||
+		start.before !== end.after ||
+		start.after !== end.before
+	) {
+		return null;
+	}
+
+	const startRule = findTransitionRule(readOffset, start, year);
+	const endRule = findTransitionRule(readOffset, end, year);
+	if (!startRule || !endRule) {
+		return null;
+	}
+
+	return `STD${formatPosixOffset(start.before)}DST${formatPosixOffset(
+		start.after,
+	)},${formatPosixRule(startRule)},${formatPosixRule(endRule)}`;
+}
+
+function withTimezoneFallbacks(
+	config: Record<string, unknown>,
+): Record<string, unknown> {
+	if (typeof config.timezone !== "string") {
+		return config;
+	}
+
+	const { timezonePosix: _previousPosix, ...rest } = config;
+	const timezonePosix = getPosixTimezone(config.timezone);
+
+	return {
+		...rest,
+		timezoneOffsetMinutes: getTimezoneOffsetMinutes(config.timezone),
+		...(timezonePosix ? { timezonePosix } : {}),
+	};
 }
 
 export const maxLayoutCells = 48;
@@ -414,12 +619,7 @@ export function buildBudpyConfig(input: BudpyConfigInput): BudpyConfig {
 			row,
 			colSpan,
 			rowSpan,
-			config: {
-				...config,
-				...(typeof config.timezone === "string"
-					? { timezoneOffsetMinutes: getTimezoneOffsetMinutes(config.timezone) }
-					: {}),
-			},
+			config: withTimezoneFallbacks(config),
 		}),
 	);
 

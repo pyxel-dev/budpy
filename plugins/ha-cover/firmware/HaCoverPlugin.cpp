@@ -269,6 +269,7 @@ struct HaCoverRenderCache {
   int16_t cellLeft, cellTop, cellWidth, cellHeight;
   String configJson;
   CoverState state;
+  String statusKey;
 };
 
 static HaCoverCache      haCoverCache[MAX_HA_COVER_CACHE];
@@ -276,12 +277,31 @@ static HaCoverRenderCache haCoverRenderCache[MAX_LAYOUT_CELLS];
 static uint32_t haCoverLastTouchMs[MAX_LAYOUT_CELLS] = {0};
 static uint8_t haCoverCacheCount = 0;
 
-HaCoverCache* findOrCreateCache(const String& entityId) {
+// The cache outlives reprovisioning: once it is full, recycle an entry that
+// no ha-cover cell of the current config shows any more.
+HaCoverCache* findUnusedCache(const AppConfig& config, const String& pluginId) {
+  for (uint8_t i = 0; i < haCoverCacheCount; i++) {
+    bool inUse = false;
+    for (uint8_t c = 0; c < config.cellCount && !inUse; c++) {
+      const LayoutCellConfig& cell = config.cells[c];
+      inUse = cell.pluginId == pluginId &&
+              haCoverCache[i].entityId == readConfig(cell.configJson).entityId;
+    }
+    if (!inUse) return &haCoverCache[i];
+  }
+  return nullptr;
+}
+
+HaCoverCache* findOrCreateCache(const String& entityId, const AppConfig& config,
+                                const String& pluginId) {
   for (uint8_t i = 0; i < haCoverCacheCount; i++) {
     if (haCoverCache[i].entityId == entityId) return &haCoverCache[i];
   }
-  if (haCoverCacheCount >= MAX_HA_COVER_CACHE) return nullptr;
-  HaCoverCache& e = haCoverCache[haCoverCacheCount++];
+  HaCoverCache* recycled = haCoverCacheCount < MAX_HA_COVER_CACHE
+                               ? &haCoverCache[haCoverCacheCount++]
+                               : findUnusedCache(config, pluginId);
+  if (recycled == nullptr) return nullptr;
+  HaCoverCache& e = *recycled;
   e.entityId    = entityId;
   e.state       = CoverState::Unknown;
   e.errorCode   = "";
@@ -291,22 +311,31 @@ HaCoverCache* findOrCreateCache(const String& entityId) {
   return &e;
 }
 
+// Loading and error states all render as CoverState::Unknown, so the render
+// cache also keys on which of them is shown.
+String coverStatusKey(const HaCoverCache* cache) {
+  if (cache == nullptr || !cache->initialised) return "-";
+  return cache->hasError ? "ERR " + cache->errorCode : "OK";
+}
+
 bool renderCacheMatches(const HaCoverRenderCache& c,
                         const LayoutCellConfig& cell, CoverState state,
-                        int16_t l, int16_t t, int16_t w, int16_t h) {
-  return c.rendered && c.cellLeft == l && c.cellTop == t &&
-         c.cellWidth == w && c.cellHeight == h &&
-         c.configJson == cell.configJson && c.state == state;
+                        const String& statusKey, int16_t l, int16_t t,
+                        int16_t w, int16_t h) {
+  return c.rendered && c.cellLeft == l && c.cellTop == t && c.cellWidth == w &&
+         c.cellHeight == h && c.configJson == cell.configJson &&
+         c.state == state && c.statusKey == statusKey;
 }
 
 void rememberRender(HaCoverRenderCache& c, const LayoutCellConfig& cell,
-                    CoverState state,
-                    int16_t l, int16_t t, int16_t w, int16_t h) {
+                    CoverState state, const String& statusKey, int16_t l,
+                    int16_t t, int16_t w, int16_t h) {
   c.rendered   = true;
   c.cellLeft   = l; c.cellTop    = t;
   c.cellWidth  = w; c.cellHeight = h;
   c.configJson = cell.configJson;
   c.state      = state;
+  c.statusKey  = statusKey;
 }
 
 // ---------------------------------------------------------------------------
@@ -652,7 +681,7 @@ void renderHaCoverPlugin(PluginRenderContext& context) {
   const HaCoverConfig cfg = readConfig(cell.configJson);
 
   // ── Cache refresh ────────────────────────────────────────────────────
-  HaCoverCache* cache = findOrCreateCache(cfg.entityId);
+  HaCoverCache* cache = findOrCreateCache(cfg.entityId, appCfg, cell.pluginId);
   const uint32_t now  = millis();
 
   if (cache != nullptr && cfg.entityId.length() > 0 &&
@@ -681,6 +710,7 @@ void renderHaCoverPlugin(PluginRenderContext& context) {
       (cache != nullptr && cache->initialised && !cache->hasError)
           ? cache->state
           : CoverState::Unknown;
+  const String statusKey = coverStatusKey(cache);
 
   // ── Render-cache check ───────────────────────────────────────────────
   HaCoverRenderCache* renderCache =
@@ -689,8 +719,8 @@ void renderHaCoverPlugin(PluginRenderContext& context) {
           : nullptr;
 
   if (!context.forceClear && renderCache != nullptr &&
-      renderCacheMatches(*renderCache, cell, currentState,
-                         cellLeft, cellTop, cellWidth, cellHeight)) {
+      renderCacheMatches(*renderCache, cell, currentState, statusKey, cellLeft,
+                         cellTop, cellWidth, cellHeight)) {
     return;
   }
 
@@ -774,8 +804,8 @@ void renderHaCoverPlugin(PluginRenderContext& context) {
 
   // ── Save render cache ─────────────────────────────────────────────────
   if (renderCache != nullptr) {
-    rememberRender(*renderCache, cell, currentState,
-                   cellLeft, cellTop, cellWidth, cellHeight);
+    rememberRender(*renderCache, cell, currentState, statusKey, cellLeft,
+                   cellTop, cellWidth, cellHeight);
   }
 }
 
@@ -798,7 +828,8 @@ void handleTouchHaCoverPlugin(PluginTouchContext& context) {
   String errCode;
   const bool ok = toggleCover(cfg, errCode);
 
-  HaCoverCache* cache = findOrCreateCache(cfg.entityId);
+  HaCoverCache* cache =
+      findOrCreateCache(cfg.entityId, context.config, context.cell.pluginId);
   if (!cache) {
     return;
   }
@@ -811,8 +842,9 @@ void handleTouchHaCoverPlugin(PluginTouchContext& context) {
     return;
   }
 
+  // Refetch on the re-render that follows the touch. (Resetting lastFetchMs
+  // alone does not make the entry stale during the first minute of uptime.)
   cache->hasError = false;
   cache->errorCode = "";
-  cache->initialised = true;
-  cache->lastFetchMs = 0;
+  cache->initialised = false;
 }

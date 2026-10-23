@@ -13,7 +13,9 @@ namespace {
 constexpr uint8_t MAX_WEATHER_CACHE = 4;
 constexpr uint8_t MAX_WEATHER_DAYS = 5;
 constexpr uint32_t FETCH_INTERVAL_MS = 60UL * 60UL * 1000UL;
-constexpr uint32_t ERROR_RETRY_INTERVAL_MS = 60UL * 60UL * 1000UL;
+// A failed fetch (network down, router rebooting...) should not leave the
+// widget in error for a full refresh period.
+constexpr uint32_t ERROR_RETRY_INTERVAL_MS = 5UL * 60UL * 1000UL;
 
 constexpr uint16_t DEFAULT_ICON_COLOR = 0xFE8C;
 constexpr uint16_t DEFAULT_LABEL_COLOR = 0x07FF;
@@ -127,7 +129,7 @@ uint8_t parseDayOffset(JsonVariantConst value) {
 
   if (!value.is<const char*>()) return 0;
   const char* text = value.as<const char*>();
-  if (!text || text[1] != '\0') return 0;
+  if (!text || text[0] == '\0' || text[1] != '\0') return 0;
   if (text[0] < '0' || text[0] > '4') return 0;
   return static_cast<uint8_t>(text[0] - '0');
 }
@@ -240,21 +242,45 @@ String urlEncode(const String& value) {
   return encoded;
 }
 
-WeatherCache* findOrCreateCache(const String& city, const String& apiKey,
-                                const String& hour) {
+bool cacheMatches(const WeatherCache& entry, const WeatherConfig& cfg) {
+  return entry.city == cfg.city && entry.apiKey == cfg.apiKey &&
+         entry.hour == cfg.hour;
+}
+
+// The cache outlives reprovisioning: once it is full, recycle an entry that
+// no weather cell of the current config uses any more.
+WeatherCache* findUnusedCache(const PluginRenderContext& context) {
   for (uint8_t i = 0; i < weatherCacheCount; i++) {
-    if (weatherCache[i].city == city && weatherCache[i].apiKey == apiKey &&
-        weatherCache[i].hour == hour) {
+    bool inUse = false;
+    for (uint8_t c = 0; c < context.config.cellCount && !inUse; c++) {
+      const LayoutCellConfig& cell = context.config.cells[c];
+      inUse = cell.pluginId == context.cell.pluginId &&
+              cacheMatches(weatherCache[i], readConfig(cell.configJson));
+    }
+
+    if (!inUse) return &weatherCache[i];
+  }
+
+  return nullptr;
+}
+
+WeatherCache* findOrCreateCache(const WeatherConfig& cfg,
+                                const PluginRenderContext& context) {
+  for (uint8_t i = 0; i < weatherCacheCount; i++) {
+    if (cacheMatches(weatherCache[i], cfg)) {
       return &weatherCache[i];
     }
   }
 
-  if (weatherCacheCount >= MAX_WEATHER_CACHE) return nullptr;
+  WeatherCache* recycled = weatherCacheCount < MAX_WEATHER_CACHE
+                               ? &weatherCache[weatherCacheCount++]
+                               : findUnusedCache(context);
+  if (recycled == nullptr) return nullptr;
 
-  WeatherCache& entry = weatherCache[weatherCacheCount++];
-  entry.city = city;
-  entry.apiKey = apiKey;
-  entry.hour = hour;
+  WeatherCache& entry = *recycled;
+  entry.city = cfg.city;
+  entry.apiKey = cfg.apiKey;
+  entry.hour = cfg.hour;
   entry.dayCount = 0;
   entry.errorCode = "";
   entry.lastFetchMs = 0;
@@ -838,7 +864,7 @@ void renderWeatherPlugin(PluginRenderContext& context) {
   if (cfg.apiKey.length() == 0 || cfg.city.length() == 0) {
     displayKey = "SETUP";
   } else {
-    WeatherCache* cache = findOrCreateCache(cfg.city, cfg.apiKey, cfg.hour);
+    WeatherCache* cache = findOrCreateCache(cfg, context);
     if (cache == nullptr) {
       displayKey = "ERR cache";
     } else {

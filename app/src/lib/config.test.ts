@@ -7,6 +7,7 @@ import {
 	createBudpyConfigInputFromConfig,
 	createDefaultCell,
 	getPluginManifest,
+	getPosixTimezone,
 	type Orientation,
 } from "./config";
 
@@ -469,5 +470,59 @@ describe("createBudpyConfigInputFromConfig", () => {
 		expect(input.screenIdleMinutes).toBe(120);
 		expect(input.screenSleepMode).toBe("dim");
 		expect(input.screenIdleUnit).toBe("hours");
+	});
+});
+
+describe("getPosixTimezone", () => {
+	const reference = new Date("2026-10-22T12:00:00Z");
+
+	it("encodes the DST rules of zones missing from the firmware table", () => {
+		expect(getPosixTimezone("Europe/Berlin", reference)).toBe(
+			"STD-1DST-2,M3.5.0/2,M10.5.0/3",
+		);
+		expect(getPosixTimezone("America/Chicago", reference)).toBe(
+			"STD6DST5,M3.2.0/2,M11.1.0/2",
+		);
+		expect(getPosixTimezone("Australia/Lord_Howe", reference)).toBe(
+			"STD-10:30DST-11,M10.1.0/2,M4.1.0/2",
+		);
+	});
+
+	it("encodes fixed-offset zones", () => {
+		expect(getPosixTimezone("Asia/Kolkata", reference)).toBe("STD-5:30");
+		expect(getPosixTimezone("UTC", reference)).toBe("STD0");
+	});
+
+	it("returns null for unknown zones", () => {
+		expect(getPosixTimezone("Not/AZone", reference)).toBeNull();
+	});
+
+	it("sends the POSIX rule with clock cells and drops stale values", () => {
+		const clockManifest = getPluginManifest("clock");
+
+		if (!clockManifest) {
+			throw new Error("Clock manifest not found");
+		}
+
+		const cell = createDefaultCell(clockManifest, "0", "clock-berlin");
+		cell.config.timezone = "Europe/Berlin";
+		cell.config.timezonePosix = "STD0";
+		const invalidCell = createDefaultCell(clockManifest, "0", "clock-bad");
+		invalidCell.config.timezone = "Not/AZone";
+		invalidCell.config.timezonePosix = "STD0";
+
+		const config = buildBudpyConfig({
+			ssid: "Home",
+			password: "secret-password",
+			orientation: "0",
+			cells: [cell, { ...invalidCell, row: 2 }],
+		});
+
+		expect(config.layout.cells[0]?.config.timezonePosix).toBe(
+			"STD-1DST-2,M3.5.0/2,M10.5.0/3",
+		);
+		expect(config.layout.cells[1]?.config).not.toHaveProperty(
+			"timezonePosix",
+		);
 	});
 });

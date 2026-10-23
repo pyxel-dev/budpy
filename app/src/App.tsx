@@ -3,9 +3,6 @@ import { EspSidebar } from "./components/EspSidebar";
 import { Layout } from "./components/Layout";
 import {
   createBudpyConfigInputFromConfig,
-  defaultBackgroundColor,
-  defaultBrightness,
-  defaultBrightnessMode,
   fitCellsToOrientation,
   getLayoutPageCount,
   listPluginManifests,
@@ -108,25 +105,20 @@ export function App() {
       config,
       pluginManifests,
     );
-    const nextCells = fitCellsToOrientation(
-      importedInput.cells,
-      importedInput.orientation,
-    );
-    const nextSetupInput = {
-      ssid: importedInput.ssid,
-      password: importedInput.password,
-      backgroundColor: importedInput.backgroundColor ?? defaultBackgroundColor,
-      brightness: importedInput.brightness ?? defaultBrightness,
-      brightnessMode: importedInput.brightnessMode ?? defaultBrightnessMode,
-    } satisfies DeviceSetupInput;
+    const {
+      orientation: importedOrientation,
+      cells: importedCells,
+      ...nextSetupInput
+    } = importedInput;
+    const nextCells = fitCellsToOrientation(importedCells, importedOrientation);
 
     setSetupInput(nextSetupInput);
     saveStoredDeviceSetupInput(nextSetupInput);
-    setOrientation(importedInput.orientation);
+    setOrientation(importedOrientation);
     setActivePage(0);
     setCells(nextCells);
     saveStoredLayoutDraft({
-      orientation: importedInput.orientation,
+      orientation: importedOrientation,
       activePage: 0,
       cells: nextCells,
     });

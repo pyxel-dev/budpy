@@ -50,7 +50,12 @@ function getLocalStorage(): KeyValueStorage | null {
 		return null;
 	}
 
-	return window.localStorage;
+	// Accessing localStorage throws when the browser blocks site storage.
+	try {
+		return window.localStorage;
+	} catch (_error) {
+		return null;
+	}
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

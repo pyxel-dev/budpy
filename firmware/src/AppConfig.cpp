@@ -334,14 +334,15 @@ bool readObject(JsonObjectConst parent, const char* key, JsonObjectConst& value,
   return true;
 }
 
+} // namespace
+
 void resetAppConfig(AppConfig& config) {
   config.~AppConfig();
   new (&config) AppConfig();
 }
-} // namespace
 
-bool parseAppConfig(const JsonDocument& doc, AppConfig& out, String& error) {
-  JsonObjectConst root = doc.as<JsonObjectConst>();
+bool parseAppConfig(JsonVariantConst config, AppConfig& out, String& error) {
+  JsonObjectConst root = config.as<JsonObjectConst>();
   if (root.isNull()) {
     return fail(error, "Config root must be an object");
   }
@@ -591,6 +592,14 @@ bool parseAppConfig(const JsonDocument& doc, AppConfig& out, String& error) {
           parsedCell.clock.hasTimezoneOffsetMinutes = true;
           parsedCell.clock.timezoneOffsetMinutes =
               static_cast<int16_t>(timezoneOffsetMinutes);
+        }
+        if (!readOptionalText(clock, "timezonePosix", "",
+                              parsedCell.clock.timezonePosix, error,
+                              "clock.timezonePosix")) {
+          return false;
+        }
+        if (parsedCell.clock.timezonePosix.length() > 64) {
+          return fail(error, "Invalid clock.timezonePosix length");
         }
         if (!readOptionalString(clock, "locale", parsed.locale,
                                 parsedCell.clock.locale, error,
